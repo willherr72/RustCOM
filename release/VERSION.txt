@@ -1,0 +1,6 @@
+RustCOM - Professional COM Port Analyzer 
+Version: 1.0.0 
+Build Date: Tue 12/09/2025  0:13:11.24 
+ 
+For support and updates: 
+https://github.com/yourusername/rustcom 

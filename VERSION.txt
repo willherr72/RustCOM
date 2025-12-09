@@ -1,0 +1,37 @@
+RustCOM - Professional COM Port Analyzer
+Version: 1.0.0
+Build: Release
+
+Features:
+✓ Multi-view modes (ASCII, HEX, Both)
+✓ Auto-reconnect on disconnect
+✓ Auto-scan for new ports
+✓ DTR/RTS signal control
+✓ Data logging with timestamps
+✓ Regex filtering
+✓ Protocol analysis (Modbus RTU/ASCII)
+✓ Virtual COM port support
+✓ ANSI escape code filtering
+✓ Configurable baud rates (300-921600)
+✓ Full serial port configuration
+
+System Requirements:
+- Windows 10/11 (64-bit)
+- No additional software required
+- Optional: com0com for virtual ports
+
+Installation:
+1. Extract all files to a folder
+2. Run rustcom.exe
+3. No installation needed!
+
+For virtual COM ports:
+- See COM0COM_SETUP.md for instructions
+
+License:
+See LICENSE file for details
+
+Support:
+- Documentation: README.md
+- Features Guide: FEATURES.md
+
