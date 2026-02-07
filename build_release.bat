@@ -23,23 +23,18 @@ if errorlevel 1 goto error
 REM Copy files
 echo [4/5] Copying files...
 copy target\release\rustcom.exe release\
-copy README.md release\
-copy FEATURES.md release\
-copy COM0COM_SETUP.md release\
-copy LICENSE release\
+if exist README.md copy README.md release\
+if exist LICENSE copy LICENSE release\
 
 REM Create version info
 echo [5/5] Creating version info...
-echo RustCOM - Professional COM Port Analyzer > release\VERSION.txt
+echo RustCOM - COM Port Analyzer > release\VERSION.txt
 echo Version: 1.0.0 >> release\VERSION.txt
 echo Build Date: %date% %time% >> release\VERSION.txt
-echo. >> release\VERSION.txt
-echo For support and updates: >> release\VERSION.txt
-echo https://github.com/yourusername/rustcom >> release\VERSION.txt
 
 echo.
 echo ========================================
-echo ✓ Build Complete!
+echo Build Complete!
 echo ========================================
 echo.
 echo Release package created in: .\release\
@@ -50,17 +45,15 @@ echo.
 echo You can now:
 echo 1. Test: release\rustcom.exe
 echo 2. Zip the 'release' folder for distribution
-echo 3. Create an installer using Inno Setup
 echo.
 pause
 goto end
 
 :error
 echo.
-echo ✗ Build failed!
+echo Build failed!
 echo.
 pause
 exit /b 1
 
 :end
-
