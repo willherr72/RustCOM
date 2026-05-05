@@ -1,40 +1,8 @@
 <script lang="ts">
-  import { activeTab, appendBytes, clearBuffer, patchActiveTab, SOLE_TAB_ID } from "$lib/stores/tabs";
-  import { ipc, onRx, onDisconnect, onTx, type RxPayload, type TxPayload, type DisconnectPayload } from "$lib/ipc";
+  import { activeTab, activeTabId, clearBuffer, patchActiveTab } from "$lib/stores/tabs";
   import { bytesToText, formatHex } from "$lib/format";
-  import { onMount } from "svelte";
 
   let scrollEl: HTMLDivElement | undefined = $state();
-  let mounted = $state(false);
-
-  // Subscriptions
-  onMount(() => {
-    let unrxs: Array<() => void> = [];
-
-    (async () => {
-      const unrx = await onRx(SOLE_TAB_ID, (event) => {
-        const payload = event.payload as RxPayload;
-        const bytes = new Uint8Array(payload.bytes);
-        appendBytes(SOLE_TAB_ID, bytes);
-      });
-      const untx = await onTx(SOLE_TAB_ID, (event) => {
-        const payload = event.payload as TxPayload;
-        // Echo TX into the buffer with direction tag so txBytes counter is correct.
-        appendBytes(SOLE_TAB_ID, new Uint8Array(payload.bytes), "tx");
-      });
-      const undisc = await onDisconnect(SOLE_TAB_ID, (event) => {
-        const payload = event.payload as DisconnectPayload;
-        patchActiveTab({ state: "disconnected", errorMessage: payload.reason, dtr: false, rts: false });
-        // Defensive: ensure the backend manager entry is reaped even if the worker
-        // didn't self-evict for some reason.
-        ipc.closePort(SOLE_TAB_ID).catch(() => undefined);
-      });
-      unrxs = [unrx, untx, undisc];
-      mounted = true;
-    })();
-
-    return () => unrxs.forEach((u) => u());
-  });
 
   let display = $derived.by(() => {
     const t = $activeTab;
@@ -46,7 +14,7 @@
   });
 
   $effect(() => {
-    if (mounted && scrollEl && $activeTab.autoScroll) {
+    if (scrollEl && $activeTab.autoScroll) {
       // Touch derived value so the effect re-runs on display change.
       void display;
       requestAnimationFrame(() => {
@@ -84,7 +52,7 @@
     Auto-scroll
   </label>
   <span class="spacer"></span>
-  <button onclick={() => clearBuffer(SOLE_TAB_ID)}>Clear</button>
+  <button onclick={() => clearBuffer($activeTabId)}>Clear</button>
 </div>
 
 <div class="term" bind:this={scrollEl}>
