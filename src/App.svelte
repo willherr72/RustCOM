@@ -47,10 +47,7 @@
       {/if}
     </aside>
     <main class="main">
-      <TabStrip
-        label={$activeTab.config.port_name ? $activeTab.config.port_name : "COM —"}
-        active
-      />
+      <TabStrip />
       <Terminal />
       <SendRow />
     </main>
