@@ -80,6 +80,22 @@ export interface Settings {
   defaults: DefaultsConfig;
 }
 
+export interface Script {
+  id: string;
+  source: string;
+}
+
+export interface ToastPayload {
+  level: string;
+  msg: string;
+  ts: number;
+}
+
+export interface ScriptLogPayload {
+  msg: string;
+  ts: number;
+}
+
 export const ipc = {
   listPorts: () => invoke<PortInfo[]>("list_ports"),
   openPort: (tabId: TabId, config: PortConfig) =>
@@ -100,6 +116,12 @@ export const ipc = {
     invoke<string>("save_log", { path, entries }),
   loadSettings: () => invoke<Settings>("load_settings"),
   saveSettings: (settings: Settings) => invoke<Settings>("save_settings", { settings }),
+  listScripts: () => invoke<Script[]>("list_scripts"),
+  saveScript: (item: Script) => invoke<Script[]>("save_script", { item }),
+  deleteScript: (id: string) => invoke<Script[]>("delete_script", { id }),
+  scriptRun: (tabId: TabId, source: string) =>
+    invoke<void>("script_run", { tabId, source }),
+  scriptStop: () => invoke<void>("script_stop"),
 };
 
 export function onRx(tabId: TabId, cb: EventCallback<RxPayload>): Promise<UnlistenFn> {
@@ -122,4 +144,16 @@ export function onReconnect(
   cb: EventCallback<ReconnectPayload>
 ): Promise<UnlistenFn> {
   return listen<ReconnectPayload>(`reconnect://${tabId}`, cb);
+}
+
+export function onToast(cb: EventCallback<ToastPayload>): Promise<UnlistenFn> {
+  return listen<ToastPayload>("toast", cb);
+}
+
+export function onScriptLog(cb: EventCallback<ScriptLogPayload>): Promise<UnlistenFn> {
+  return listen<ScriptLogPayload>("script_log", cb);
+}
+
+export function onScriptError(cb: EventCallback<string>): Promise<UnlistenFn> {
+  return listen<string>("script_error", cb);
 }
