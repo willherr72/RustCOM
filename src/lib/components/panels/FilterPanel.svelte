@@ -17,13 +17,15 @@
     Enable regex filter
   </label>
 
-  <label class="lbl">Pattern</label>
-  <input
-    placeholder="e.g. ^READY|^ERROR"
-    value={$activeTab.filterPattern}
-    oninput={(e) => patchActiveTab({ filterPattern: (e.currentTarget as HTMLInputElement).value })}
-    disabled={!$activeTab.filterEnabled}
-  />
+  <label class="lbl">
+    Pattern
+    <input
+      placeholder="e.g. ^READY|^ERROR"
+      value={$activeTab.filterPattern}
+      oninput={(e) => patchActiveTab({ filterPattern: (e.currentTarget as HTMLInputElement).value })}
+      disabled={!$activeTab.filterEnabled}
+    />
+  </label>
 
   {#if liveError}
     <p class="err">{liveError}</p>
@@ -36,8 +38,8 @@
   .panel { padding: 12px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; }
   h4 { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-subtle); margin: 0 0 6px; font-weight: 600; }
   .toggle { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--fg-muted); }
-  .lbl { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-subtle); margin-top: 6px; }
-  input[type="text"], input:not([type]) { width: 100%; font-family: var(--font-mono); }
+  .lbl { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-subtle); display: flex; flex-direction: column; gap: 4px; }
+  input { width: 100%; font-family: var(--font-mono); }
   .err { color: var(--err); font-size: 11px; margin: 4px 0 0; }
   .hint { color: var(--fg-subtle); font-size: 10px; margin-top: 8px; }
 </style>

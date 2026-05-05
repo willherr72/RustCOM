@@ -69,77 +69,89 @@
 <div class="panel">
   <h4>Connection</h4>
 
-  <label class="lbl">Port</label>
-  <select
-    value={$activeTab.config.port_name}
-    onchange={(e) => patchConfig("port_name", (e.currentTarget as HTMLSelectElement).value)}
-    disabled={$activeTab.state === "connected"}
-  >
-    <option value="" disabled>Select port…</option>
-    {#each $availablePorts as p (p.name)}
-      <option value={p.name}>{p.name} {p.kind ? `(${p.kind})` : ""}</option>
-    {/each}
-  </select>
+  <label class="lbl">
+    Port
+    <select
+      value={$activeTab.config.port_name}
+      onchange={(e) => patchConfig("port_name", (e.currentTarget as HTMLSelectElement).value)}
+      disabled={$activeTab.state === "connected"}
+    >
+      <option value="" disabled>Select port…</option>
+      {#each $availablePorts as p (p.name)}
+        <option value={p.name}>{p.name} {p.kind ? `(${p.kind})` : ""}</option>
+      {/each}
+    </select>
+  </label>
 
-  <label class="lbl">Baud</label>
-  <select
-    value={$activeTab.config.baud_rate.toString()}
-    onchange={(e) => setBaud((e.currentTarget as HTMLSelectElement).value)}
-    disabled={$activeTab.state === "connected"}
-  >
-    {#each BAUD_RATES as b}
-      <option value={b.toString()}>{b}</option>
-    {/each}
-  </select>
+  <label class="lbl">
+    Baud
+    <select
+      value={$activeTab.config.baud_rate.toString()}
+      onchange={(e) => setBaud((e.currentTarget as HTMLSelectElement).value)}
+      disabled={$activeTab.state === "connected"}
+    >
+      {#each BAUD_RATES as b}
+        <option value={b.toString()}>{b}</option>
+      {/each}
+    </select>
+  </label>
 
   <div class="row2">
     <div>
-      <label class="lbl">Data</label>
-      <select
-        value={$activeTab.config.data_bits}
-        onchange={(e) => patchConfig("data_bits", (e.currentTarget as HTMLSelectElement).value as DataBits)}
-        disabled={$activeTab.state === "connected"}
-      >
-        <option value="five">5</option>
-        <option value="six">6</option>
-        <option value="seven">7</option>
-        <option value="eight">8</option>
-      </select>
+      <label class="lbl">
+        Data
+        <select
+          value={$activeTab.config.data_bits}
+          onchange={(e) => patchConfig("data_bits", (e.currentTarget as HTMLSelectElement).value as DataBits)}
+          disabled={$activeTab.state === "connected"}
+        >
+          <option value="five">5</option>
+          <option value="six">6</option>
+          <option value="seven">7</option>
+          <option value="eight">8</option>
+        </select>
+      </label>
     </div>
     <div>
-      <label class="lbl">Stop</label>
-      <select
-        value={$activeTab.config.stop_bits}
-        onchange={(e) => patchConfig("stop_bits", (e.currentTarget as HTMLSelectElement).value as StopBits)}
-        disabled={$activeTab.state === "connected"}
-      >
-        <option value="one">1</option>
-        <option value="two">2</option>
-      </select>
+      <label class="lbl">
+        Stop
+        <select
+          value={$activeTab.config.stop_bits}
+          onchange={(e) => patchConfig("stop_bits", (e.currentTarget as HTMLSelectElement).value as StopBits)}
+          disabled={$activeTab.state === "connected"}
+        >
+          <option value="one">1</option>
+          <option value="two">2</option>
+        </select>
+      </label>
     </div>
   </div>
 
-  <label class="lbl">Parity</label>
-  <select
-    value={$activeTab.config.parity}
-    onchange={(e) => patchConfig("parity", (e.currentTarget as HTMLSelectElement).value as Parity)}
-    disabled={$activeTab.state === "connected"}
-  >
-    <option value="none">None</option>
-    <option value="even">Even</option>
-    <option value="odd">Odd</option>
-  </select>
+  <label class="lbl">
+    Parity
+    <select
+      value={$activeTab.config.parity}
+      onchange={(e) => patchConfig("parity", (e.currentTarget as HTMLSelectElement).value as Parity)}
+      disabled={$activeTab.state === "connected"}
+    >
+      <option value="none">None</option>
+      <option value="even">Even</option>
+      <option value="odd">Odd</option>
+    </select>
+  </label>
 
-  <label class="lbl">Flow</label>
-  <select
-    value={$activeTab.config.flow_control}
-    onchange={(e) => patchConfig("flow_control", (e.currentTarget as HTMLSelectElement).value as FlowControl)}
-    disabled={$activeTab.state === "connected"}
-  >
-    <option value="none">None</option>
-    <option value="software">Software</option>
-    <option value="hardware">Hardware</option>
-  </select>
+  <label class="lbl">
+    Flow
+    <select
+      value={$activeTab.config.flow_control}
+      onchange={(e) => patchConfig("flow_control", (e.currentTarget as HTMLSelectElement).value as FlowControl)}
+      disabled={$activeTab.state === "connected"}
+    >
+      <option value="none">None</option>
+      <option value="software">Software</option>
+      <option value="hardware">Hardware</option>
+    </select>
+  </label>
 
   {#if $activeTab.state === "connected"}
     <button class="primary danger" onclick={disconnect}>Disconnect</button>
@@ -166,7 +178,7 @@
   .panel { padding: 12px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; overflow: auto; }
   h4 { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-subtle); margin: 0; font-weight: 600; }
   h4.signals { margin-top: 14px; }
-  .lbl { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-subtle); margin-top: 4px; }
+  .lbl { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-subtle); display: flex; flex-direction: column; gap: 4px; }
   select { width: 100%; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   button.primary { width: 100%; margin-top: 8px; padding: 8px 0; }
