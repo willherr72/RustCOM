@@ -10,6 +10,7 @@ import {
   MAX_BUFFER_SIZE,
   BUFFER_DRAIN_SIZE,
 } from "./tabs";
+import { pushHistory, navigateHistory } from "./tabs";
 
 describe("tabs store", () => {
   beforeEach(() => {
@@ -36,6 +37,8 @@ describe("tabs store", () => {
         dtr: false,
         rts: false,
         errorMessage: null,
+        history: [],
+        historyIndex: -1,
       },
     ]);
     activeTabId.set(SOLE_TAB_ID);
@@ -77,5 +80,25 @@ describe("tabs store", () => {
     const t = get(activeTab);
     expect(t.buffer.length).toBe(0);
     expect(t.rxBytes).toBe(3);
+  });
+
+  it("pushHistory dedupes consecutive duplicates", () => {
+    pushHistory(SOLE_TAB_ID, "AT");
+    pushHistory(SOLE_TAB_ID, "AT");
+    pushHistory(SOLE_TAB_ID, "STATUS");
+    expect(get(activeTab).history).toEqual(["AT", "STATUS"]);
+  });
+
+  it("navigateHistory walks up then down", () => {
+    pushHistory(SOLE_TAB_ID, "one");
+    pushHistory(SOLE_TAB_ID, "two");
+    pushHistory(SOLE_TAB_ID, "three");
+    expect(navigateHistory(SOLE_TAB_ID, "up")).toBe("three");
+    expect(navigateHistory(SOLE_TAB_ID, "up")).toBe("two");
+    expect(navigateHistory(SOLE_TAB_ID, "up")).toBe("one");
+    expect(navigateHistory(SOLE_TAB_ID, "up")).toBe("one"); // clamped
+    expect(navigateHistory(SOLE_TAB_ID, "down")).toBe("two");
+    expect(navigateHistory(SOLE_TAB_ID, "down")).toBe("three");
+    expect(navigateHistory(SOLE_TAB_ID, "down")).toBe("");
   });
 });

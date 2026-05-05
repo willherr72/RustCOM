@@ -6,6 +6,7 @@ export type ConnState = "disconnected" | "connecting" | "connected" | "reconnect
 
 export const MAX_BUFFER_SIZE = 100_000;
 export const BUFFER_DRAIN_SIZE = 10_000;
+export const HISTORY_MAX = 200;
 
 export interface Tab {
   id: TabId;
@@ -22,6 +23,8 @@ export interface Tab {
   dtr: boolean;
   rts: boolean;
   errorMessage: string | null;
+  history: string[];
+  historyIndex: number; // -1 == not navigating
 }
 
 export const SOLE_TAB_ID: TabId = 1;
@@ -55,6 +58,8 @@ function defaultTab(): Tab {
     dtr: false,
     rts: false,
     errorMessage: null,
+    history: [],
+    historyIndex: -1,
   };
 }
 
@@ -101,4 +106,46 @@ export function clearBuffer(id: TabId) {
   tabs.update((list) =>
     list.map((t) => (t.id === id ? { ...t, buffer: new Uint8Array(0) } : t))
   );
+}
+
+export function pushHistory(id: TabId, entry: string) {
+  if (!entry) return;
+  tabs.update((list) =>
+    list.map((t) => {
+      if (t.id !== id) return t;
+      let h = t.history;
+      if (h[h.length - 1] === entry) {
+        h = [...h]; // no duplicate consecutive entry
+      } else {
+        h = [...h, entry];
+        if (h.length > HISTORY_MAX) h = h.slice(h.length - HISTORY_MAX);
+      }
+      return { ...t, history: h, historyIndex: -1 };
+    })
+  );
+}
+
+export function navigateHistory(id: TabId, direction: "up" | "down"): string | null {
+  let result: string | null = null;
+  tabs.update((list) =>
+    list.map((t) => {
+      if (t.id !== id) return t;
+      const h = t.history;
+      if (h.length === 0) return t;
+      let idx = t.historyIndex;
+      if (direction === "up") {
+        idx = idx === -1 ? h.length - 1 : Math.max(0, idx - 1);
+      } else {
+        if (idx === -1) return t;
+        idx = idx + 1;
+        if (idx >= h.length) {
+          result = "";
+          return { ...t, historyIndex: -1 };
+        }
+      }
+      result = h[idx];
+      return { ...t, historyIndex: idx };
+    })
+  );
+  return result;
 }
