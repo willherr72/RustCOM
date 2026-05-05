@@ -1,5 +1,13 @@
 import { writable, derived, get, type Readable, type Writable } from "svelte/store";
-import type { LineEnding, PortConfig, SendMode, TabId } from "$lib/ipc";
+import type { Direction, LineEnding, PortConfig, SendMode, TabId } from "$lib/ipc";
+
+export type { Direction };
+
+export interface LogEntry {
+  ts_ms: number;
+  direction: Direction;
+  bytes: number[];
+}
 
 export type ViewMode = "ascii" | "hex" | "both";
 export type ConnState = "disconnected" | "connecting" | "connected" | "reconnecting";
@@ -27,6 +35,8 @@ export interface Tab {
   historyIndex: number; // -1 == not navigating
   filterEnabled: boolean;
   filterPattern: string;
+  loggingEnabled: boolean;
+  logEntries: LogEntry[];
 }
 
 function defaultConfig(): PortConfig {
@@ -68,6 +78,8 @@ function defaultTab(id: TabId = allocTabId()): Tab {
     historyIndex: -1,
     filterEnabled: false,
     filterPattern: "",
+    loggingEnabled: false,
+    logEntries: [],
   };
 }
 
@@ -111,8 +123,6 @@ export function patchActiveTab(patch: Partial<Tab>) {
   const id = get(activeTabId);
   tabs.update((list) => list.map((t) => (t.id === id ? { ...t, ...patch } : t)));
 }
-
-export type Direction = "rx" | "tx";
 
 export function appendBytes(id: TabId, bytes: Uint8Array, direction: Direction = "rx") {
   tabs.update((list) =>
@@ -184,4 +194,21 @@ export function navigateHistory(id: TabId, direction: "up" | "down"): string | n
     })
   );
   return result;
+}
+
+export function pushLog(id: TabId, direction: Direction, bytes: Uint8Array, ts_ms: number) {
+  tabs.update((list) =>
+    list.map((t) => {
+      if (t.id !== id || !t.loggingEnabled) return t;
+      const entry: LogEntry = { ts_ms, direction, bytes: Array.from(bytes) };
+      const next = [...t.logEntries, entry];
+      // Cap log at 10_000 entries to prevent runaway memory.
+      if (next.length > 10_000) next.splice(0, next.length - 10_000);
+      return { ...t, logEntries: next };
+    })
+  );
+}
+
+export function clearLog(id: TabId) {
+  tabs.update((list) => list.map((t) => (t.id === id ? { ...t, logEntries: [] } : t)));
 }

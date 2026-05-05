@@ -14,6 +14,8 @@ import {
   closeTab,
   setActiveTab,
   getTab,
+  pushLog,
+  patchActiveTab,
   type Tab,
 } from "./tabs";
 
@@ -46,6 +48,8 @@ describe("tabs store", () => {
         historyIndex: -1,
         filterEnabled: false,
         filterPattern: "",
+        loggingEnabled: false,
+        logEntries: [],
       },
     ]);
     activeTabId.set(1);
@@ -143,5 +147,17 @@ describe("tabs store", () => {
   it("getTab finds by id", () => {
     expect(getTab(1)?.id).toBe(1);
     expect(getTab(999)).toBeUndefined();
+  });
+
+  it("pushLog only captures when logging is enabled", () => {
+    // logging is off by default → entry is dropped
+    pushLog(1, "rx", new Uint8Array([1, 2, 3]), 1000);
+    expect(get(activeTab).logEntries.length).toBe(0);
+
+    patchActiveTab({ loggingEnabled: true });
+    pushLog(1, "rx", new Uint8Array([4, 5]), 2000);
+    expect(get(activeTab).logEntries).toEqual([
+      { ts_ms: 2000, direction: "rx", bytes: [4, 5] },
+    ]);
   });
 });

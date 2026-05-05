@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { tabs, appendBytes, type Tab } from "$lib/stores/tabs";
+import { tabs, appendBytes, pushLog, type Tab } from "$lib/stores/tabs";
 import {
   ipc,
   onRx,
@@ -20,11 +20,15 @@ async function subscribe(id: TabId) {
 
   const unrx = await onRx(id, (event) => {
     const p = event.payload as RxPayload;
-    appendBytes(id, new Uint8Array(p.bytes), "rx");
+    const bytes = new Uint8Array(p.bytes);
+    appendBytes(id, bytes, "rx");
+    pushLog(id, "rx", bytes, p.ts);
   });
   const untx = await onTx(id, (event) => {
     const p = event.payload as TxPayload;
-    appendBytes(id, new Uint8Array(p.bytes), "tx");
+    const bytes = new Uint8Array(p.bytes);
+    appendBytes(id, bytes, "tx");
+    pushLog(id, "tx", bytes, p.ts);
   });
   const undisc = await onDisconnect(id, (event) => {
     const p = event.payload as DisconnectPayload;

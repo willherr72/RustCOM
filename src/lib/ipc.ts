@@ -41,6 +41,14 @@ export interface DisconnectPayload {
   ts: number;
 }
 
+export type Direction = "rx" | "tx";
+
+export interface LogEntryDto {
+  ts_ms: number;
+  direction: Direction;
+  bytes: number[];
+}
+
 export type MacroMode = "ascii" | "hex";
 
 export interface Macro {
@@ -68,6 +76,8 @@ export const ipc = {
   listMacros: () => invoke<Macro[]>("list_macros"),
   saveMacro: (item: Macro) => invoke<Macro[]>("save_macro", { item }),
   deleteMacro: (id: string) => invoke<Macro[]>("delete_macro", { id }),
+  saveLog: (path: string, entries: LogEntryDto[]) =>
+    invoke<string>("save_log", { path, entries }),
 };
 
 export function onRx(tabId: TabId, cb: EventCallback<RxPayload>): Promise<UnlistenFn> {
