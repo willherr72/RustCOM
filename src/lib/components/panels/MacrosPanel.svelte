@@ -3,8 +3,7 @@
   import { macros, loadMacros, upsertMacro, removeMacro, newMacroId } from "$lib/stores/macros";
   import { activeTab, activeTabId, patchActiveTab } from "$lib/stores/tabs";
   import { ipc, type LineEnding, type Macro } from "$lib/ipc";
-
-  const HOTKEYS = ["", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"];
+  import MacroEditor from "$lib/components/panels/MacroEditor.svelte";
 
   let editingId = $state<string | null>(null);
   let draft = $state<Macro>(blankMacro());
@@ -78,41 +77,20 @@
     <button class="add" onclick={startNew}>+ New</button>
   </div>
 
-  {#if $macros.length === 0}
+  {#if $macros.length === 0 && !editingId}
     <p class="empty">No macros yet. Click <em>+ New</em> to add one.</p>
   {/if}
 
   {#each $macros as m (m.id)}
     {#if editingId === m.id}
-      <div class="edit">
-        <input placeholder="Name" bind:value={draft.name} />
-        <div class="row">
-          <select bind:value={draft.mode}>
-            <option value="ascii">ASCII</option>
-            <option value="hex">Hex</option>
-          </select>
-          {#if draft.mode === "ascii"}
-            <select value={draft.line_ending ?? "none"} onchange={(e) => (draft.line_ending = (e.currentTarget as HTMLSelectElement).value as LineEnding)}>
-              <option value="none">None</option>
-              <option value="cr">\r</option>
-              <option value="lf">\n</option>
-              <option value="crlf">\r\n</option>
-            </select>
-          {/if}
-          <select value={draft.hotkey ?? ""} onchange={(e) => (draft.hotkey = (e.currentTarget as HTMLSelectElement).value || null)}>
-            {#each HOTKEYS as k}
-              <option value={k}>{k || "no hotkey"}</option>
-            {/each}
-          </select>
-        </div>
-        <textarea rows="2" bind:value={draft.payload} placeholder={draft.mode === "ascii" ? "Message…" : "AA BB 0D 0A"}></textarea>
-        {#if panelError}<p class="err">{panelError}</p>{/if}
-        <div class="row gap">
-          <button class="primary" onclick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</button>
-          <button onclick={() => { editingId = null; panelError = null; }}>Cancel</button>
-          <button class="danger" onclick={() => del(m.id)}>Delete</button>
-        </div>
-      </div>
+      <MacroEditor
+        bind:draft
+        {saving}
+        {panelError}
+        onSave={save}
+        onCancel={() => { editingId = null; panelError = null; }}
+        onDelete={() => del(m.id)}
+      />
     {:else}
       <div class="item">
         <div class="meta">
@@ -128,34 +106,13 @@
   {/each}
 
   {#if editingId && !$macros.some((m) => m.id === editingId)}
-    <div class="edit">
-      <input placeholder="Name" bind:value={draft.name} />
-      <div class="row">
-        <select bind:value={draft.mode}>
-          <option value="ascii">ASCII</option>
-          <option value="hex">Hex</option>
-        </select>
-        {#if draft.mode === "ascii"}
-          <select value={draft.line_ending ?? "none"} onchange={(e) => (draft.line_ending = (e.currentTarget as HTMLSelectElement).value as LineEnding)}>
-            <option value="none">None</option>
-            <option value="cr">\r</option>
-            <option value="lf">\n</option>
-            <option value="crlf">\r\n</option>
-          </select>
-        {/if}
-        <select value={draft.hotkey ?? ""} onchange={(e) => (draft.hotkey = (e.currentTarget as HTMLSelectElement).value || null)}>
-          {#each HOTKEYS as k}
-            <option value={k}>{k || "no hotkey"}</option>
-          {/each}
-        </select>
-      </div>
-      <textarea rows="2" bind:value={draft.payload} placeholder={draft.mode === "ascii" ? "Message…" : "AA BB 0D 0A"}></textarea>
-      {#if panelError}<p class="err">{panelError}</p>{/if}
-      <div class="row gap">
-        <button class="primary" onclick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</button>
-        <button onclick={() => { editingId = null; panelError = null; }}>Cancel</button>
-      </div>
-    </div>
+    <MacroEditor
+      bind:draft
+      {saving}
+      {panelError}
+      onSave={save}
+      onCancel={() => { editingId = null; panelError = null; }}
+    />
   {/if}
 </div>
 
@@ -172,14 +129,4 @@
   .kind { color: var(--fg-subtle); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
   .actions { display: flex; gap: 4px; }
   .actions button { padding: 4px 8px; font-size: 10px; }
-
-  .edit { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: var(--bg-input); border-radius: var(--radius-md); border: 1px solid var(--accent); }
-  .edit input, .edit select, .edit textarea { font-family: var(--font-mono); font-size: 11px; }
-  .edit textarea { resize: vertical; min-height: 36px; padding: 6px 8px; border-radius: var(--radius-md); background: var(--bg); color: var(--fg); border: 1px solid transparent; }
-  .edit textarea:focus { border-color: var(--accent); outline: none; }
-  .row { display: flex; gap: 4px; min-width: 0; }
-  .row.gap { gap: 6px; flex-wrap: wrap; }
-  .row select { flex: 1 1 0; min-width: 0; }
-  .edit input, .edit textarea { box-sizing: border-box; width: 100%; }
-  .err { color: var(--err); font-size: 11px; margin: 0; }
 </style>
