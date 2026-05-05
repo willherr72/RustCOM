@@ -1,6 +1,71 @@
+/* Zed Cool palette — see spec section 3 */
 :root {
   --bg: #161719;
+  --bg-elevated: #1c1d20;
+  --bg-titlebar: #131416;
+  --bg-input: #1f2124;
+  --bg-input-hover: #25272b;
+  --border: #1f2124;
+  --border-strong: #2a2c30;
   --fg: #d4d6d9;
+  --fg-muted: #8a8d92;
+  --fg-subtle: #6a6d72;
+  --accent: #7a86c8;
+  --accent-fg: #f0f1f5;
+  --ok: #8fc4a8;
+  --ok-bg: #1f2e26;
+  --warn: #d4b483;
+  --warn-bg: #2e2820;
+  --err: #c87a86;
+  --err-bg: #2e1f24;
+  --tx: #c4a78c;
+  --rx: #b8c4d8;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --font-ui: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", ui-monospace, Menlo, monospace;
+
+  --activity-bar-w: 44px;
+  --side-panel-w: 240px;
+  --titlebar-h: 32px;
+  --statusbar-h: 28px;
 }
 
-html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); }
+html, body, #app { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--fg); }
+body { font-family: var(--font-ui); font-size: 13px; }
+
+/* Scrollbar (webview, Windows) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--fg-subtle); }
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--fg);
+  background: var(--bg-input);
+  border: none;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+button:hover { background: var(--bg-input-hover); }
+button.primary { background: var(--accent); color: var(--accent-fg); font-weight: 500; }
+button.primary:hover { filter: brightness(1.1); }
+button.danger { background: var(--err); color: var(--accent-fg); }
+
+input, select {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--fg);
+  background: var(--bg-input);
+  border: 1px solid transparent;
+  padding: 5px 8px;
+  border-radius: var(--radius-md);
+  outline: none;
+}
+input:focus, select:focus { border-color: var(--accent); }
