@@ -10,7 +10,7 @@
   import MacrosPanel from "$lib/components/panels/MacrosPanel.svelte";
   import FilterPanel from "$lib/components/panels/FilterPanel.svelte";
   import LogsPanel from "$lib/components/panels/LogsPanel.svelte";
-  import { activeTab, activeTabId } from "$lib/stores/tabs";
+  import { activeTab, activeTabId, patchActiveTab } from "$lib/stores/tabs";
   import { startPolling, stopPolling } from "$lib/stores/ports";
   import { startEventRouter, stopEventRouter } from "$lib/eventRouter";
   import { macros } from "$lib/stores/macros";
@@ -42,6 +42,14 @@
   }
 
   function onWindowKey(e: KeyboardEvent) {
+    // Ctrl+F (or Cmd+F on macOS) toggles the search overlay for the active tab.
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+      e.preventDefault();
+      const open = !get(activeTab).searchOpen;
+      patchActiveTab({ searchOpen: open, searchMatchIndex: -1 });
+      return;
+    }
+
     // F1–F12 trigger macros if assigned. Skip when focus is in an input/textarea
     // so users can still rebind in OS-controlled forms etc.
     if (!/^F([1-9]|1[0-2])$/.test(e.key)) return;

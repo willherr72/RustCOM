@@ -2,6 +2,7 @@
   import { activeTab, activeTabId, clearBuffer, patchActiveTab } from "$lib/stores/tabs";
   import { bytesToText, formatHex } from "$lib/format";
   import { applyFilter } from "$lib/filter";
+  import SearchOverlay from "$lib/components/SearchOverlay.svelte";
 
   let scrollEl: HTMLDivElement | undefined = $state();
 
@@ -57,8 +58,11 @@
   <button onclick={() => clearBuffer($activeTabId)}>Clear</button>
 </div>
 
-<div class="term" bind:this={scrollEl}>
-  <pre>{display}</pre>
+<div class="term-wrap">
+  <SearchOverlay displayText={display} />
+  <div class="term" bind:this={scrollEl}>
+    <pre>{display}</pre>
+  </div>
 </div>
 
 <style>
@@ -77,6 +81,8 @@
   .check { display: inline-flex; align-items: center; gap: 4px; color: var(--fg-muted); cursor: pointer; }
   .spacer { flex: 1; }
   .bar button { padding: 4px 10px; font-size: 10px; }
+  .term-wrap { position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .term-wrap .term { flex: 1; }
   .term {
     flex: 1;
     background: var(--bg-elevated);
