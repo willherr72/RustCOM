@@ -79,7 +79,9 @@ fn run_loop(
         loop {
             match rx.try_recv() {
                 Ok(WorkerCommand::Write(bytes)) => {
+                    let _ = port.set_timeout(Duration::from_secs(2));
                     let result = port.write_all(&bytes);
+                    let _ = port.set_timeout(Duration::from_millis(10));
                     if result.is_ok() {
                         emit_tx(&app, tab_id, bytes);
                     } else if let Err(e) = result {
