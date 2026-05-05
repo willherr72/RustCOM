@@ -1,0 +1,6 @@
+:root {
+  --bg: #161719;
+  --fg: #d4d6d9;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); }
