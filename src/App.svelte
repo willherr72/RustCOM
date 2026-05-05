@@ -10,6 +10,7 @@
   import MacrosPanel from "$lib/components/panels/MacrosPanel.svelte";
   import FilterPanel from "$lib/components/panels/FilterPanel.svelte";
   import LogsPanel from "$lib/components/panels/LogsPanel.svelte";
+  import ScriptsPanel from "$lib/components/panels/ScriptsPanel.svelte";
   import { activeTab, activeTabId, patchActiveTab } from "$lib/stores/tabs";
   import { startPolling, stopPolling } from "$lib/stores/ports";
   import { startEventRouter, stopEventRouter } from "$lib/eventRouter";
@@ -90,8 +91,8 @@
         <FilterPanel />
       {:else if active === "logs"}
         <LogsPanel />
-      {:else}
-        <div class="muted-pad">Coming in Plan 3.</div>
+      {:else if active === "scripts"}
+        <ScriptsPanel />
       {/if}
     </aside>
     <main class="main">
@@ -114,5 +115,4 @@
   .body { display: grid; grid-template-columns: var(--activity-bar-w) var(--side-panel-w) 1fr; min-height: 0; }
   .side { background: var(--bg); border-right: 1px solid var(--border); overflow: hidden; }
   .main { display: flex; flex-direction: column; min-height: 0; background: var(--bg); }
-  .muted-pad { padding: 14px; color: var(--fg-subtle); font-size: 11px; }
 </style>
