@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeTab, navigateHistory, patchActiveTab, pushHistory, SOLE_TAB_ID } from "$lib/stores/tabs";
+  import { activeTab, activeTabId, navigateHistory, patchActiveTab, pushHistory } from "$lib/stores/tabs";
   import { ipc, type LineEnding, type SendMode } from "$lib/ipc";
 
   let value = $state("");
@@ -11,14 +11,14 @@
     sending = true;
     try {
       if (tab.sendMode === "ascii") {
-        await ipc.sendText(SOLE_TAB_ID, value, tab.lineEnding);
+        await ipc.sendText($activeTabId, value, tab.lineEnding);
       } else {
-        await ipc.sendHex(SOLE_TAB_ID, value);
+        await ipc.sendHex($activeTabId, value);
       }
       // The backend emits tx://<tab_id> after the actual write succeeds —
       // Terminal.svelte's onTx handler updates txBytes and the visible buffer
       // from there. We never bump counters client-side; backend is the source of truth.
-      pushHistory(SOLE_TAB_ID, value);
+      pushHistory($activeTabId, value);
       value = "";
     } catch (e) {
       patchActiveTab({ errorMessage: String(e) });
@@ -34,13 +34,13 @@
       return;
     }
     if (e.key === "ArrowUp") {
-      const r = navigateHistory(SOLE_TAB_ID, "up");
+      const r = navigateHistory($activeTabId, "up");
       if (r !== null) {
         e.preventDefault();
         value = r;
       }
     } else if (e.key === "ArrowDown") {
-      const r = navigateHistory(SOLE_TAB_ID, "down");
+      const r = navigateHistory($activeTabId, "down");
       if (r !== null) {
         e.preventDefault();
         value = r;
