@@ -14,6 +14,18 @@
 
   onMount(() => startPolling());
   onDestroy(() => stopPolling());
+
+  function dataLabel(d: string) {
+    return ({ five: "5", six: "6", seven: "7", eight: "8" } as const)[d as "five" | "six" | "seven" | "eight"];
+  }
+
+  function stopLabel(s: string) {
+    return ({ one: "1", two: "2" } as const)[s as "one" | "two"];
+  }
+
+  function parityLabel(p: string) {
+    return ({ none: "N", even: "E", odd: "O" } as const)[p as "none" | "even" | "odd"];
+  }
 </script>
 
 <div class="app">
@@ -36,7 +48,13 @@
       <SendRow />
     </main>
   </div>
-  <StatusBar />
+  <StatusBar
+    connected={$activeTab.state === "connected"}
+    portName={$activeTab.config.port_name}
+    rxBytes={$activeTab.rxBytes}
+    txBytes={$activeTab.txBytes}
+    settingsLabel={`${$activeTab.config.baud_rate} ${dataLabel($activeTab.config.data_bits)}-${parityLabel($activeTab.config.parity)}-${stopLabel($activeTab.config.stop_bits)}`}
+  />
 </div>
 
 <style>
