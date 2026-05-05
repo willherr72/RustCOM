@@ -8,6 +8,8 @@
 
   let editingId = $state<string | null>(null);
   let draft = $state<Macro>(blankMacro());
+  let panelError = $state<string | null>(null);
+  let saving = $state(false);
 
   function blankMacro(): Macro {
     return { id: newMacroId(), name: "", mode: "ascii", payload: "", line_ending: "crlf", hotkey: null };
@@ -18,25 +20,39 @@
   function startNew() {
     draft = blankMacro();
     editingId = draft.id;
+    panelError = null;
   }
 
   function startEdit(m: Macro) {
     draft = { ...m };
     editingId = m.id;
+    panelError = null;
   }
 
   async function save() {
+    panelError = null;
     if (!draft.name.trim()) {
-      patchActiveTab({ errorMessage: "Macro needs a name" });
+      panelError = "Macro needs a name";
       return;
     }
-    await upsertMacro(draft);
-    editingId = null;
+    saving = true;
+    try {
+      await upsertMacro({ ...draft, name: draft.name.trim() });
+      editingId = null;
+    } catch (e) {
+      panelError = `Save failed: ${String(e)}`;
+    } finally {
+      saving = false;
+    }
   }
 
   async function del(id: string) {
-    await removeMacro(id);
-    if (editingId === id) editingId = null;
+    try {
+      await removeMacro(id);
+      if (editingId === id) editingId = null;
+    } catch (e) {
+      panelError = `Delete failed: ${String(e)}`;
+    }
   }
 
   async function run(m: Macro) {
@@ -90,9 +106,10 @@
           </select>
         </div>
         <textarea rows="2" bind:value={draft.payload} placeholder={draft.mode === "ascii" ? "Message…" : "AA BB 0D 0A"}></textarea>
+        {#if panelError}<p class="err">{panelError}</p>{/if}
         <div class="row gap">
-          <button class="primary" onclick={save}>Save</button>
-          <button onclick={() => (editingId = null)}>Cancel</button>
+          <button class="primary" onclick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+          <button onclick={() => { editingId = null; panelError = null; }}>Cancel</button>
           <button class="danger" onclick={() => del(m.id)}>Delete</button>
         </div>
       </div>
@@ -133,9 +150,10 @@
         </select>
       </div>
       <textarea rows="2" bind:value={draft.payload} placeholder={draft.mode === "ascii" ? "Message…" : "AA BB 0D 0A"}></textarea>
+      {#if panelError}<p class="err">{panelError}</p>{/if}
       <div class="row gap">
-        <button class="primary" onclick={save}>Save</button>
-        <button onclick={() => (editingId = null)}>Cancel</button>
+        <button class="primary" onclick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+        <button onclick={() => { editingId = null; panelError = null; }}>Cancel</button>
       </div>
     </div>
   {/if}
@@ -163,4 +181,5 @@
   .row.gap { gap: 6px; flex-wrap: wrap; }
   .row select { flex: 1 1 0; min-width: 0; }
   .edit input, .edit textarea { box-sizing: border-box; width: 100%; }
+  .err { color: var(--err); font-size: 11px; margin: 0; }
 </style>
