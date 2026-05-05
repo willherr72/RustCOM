@@ -4,6 +4,8 @@ Cargo.lock
 *.swo
 *~
 .DS_Store
+.superpowers/
+.claude/
 
 
 
