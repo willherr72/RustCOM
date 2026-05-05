@@ -1,35 +1,23 @@
 # RustCOM — COM Port Analyzer
 
-A serial-port analyzer built with Tauri 2 + Svelte 5. Cross-platform desktop binary, native serial I/O, modern UI.
+A multi-port serial-port analyzer with embedded Lua scripting, built with Tauri 2 and Svelte 5.
 
-## Status
+## Features
 
-- **Plan 1 (current)** — single-port end-to-end: connect, RX streaming, ASCII/Hex/Both view, ANSI strip, ASCII/Hex send with line endings, DTR/RTS, command history.
-- **Plan 2 (next)** — multi-port tabs, send macros, regex filter, logging, in-buffer search.
-- **Plan 3 (after)** — Lua scripting (mlua + Monaco editor), polish, packaging, plot view roadmap.
+- **Multi-port tabs** — open many COM ports at once, each with its own buffer, settings, and history.
+- **Three views** — ASCII, Hex (16-byte rows with offset + ASCII gutter), or Both. ANSI escape stripping.
+- **Send modes** — ASCII with selectable line endings (`None`, `\r`, `\n`, `\r\n`) or raw hex (`AA BB 0D 0A`).
+- **Send macros** — named one-shot snippets, optional F1–F12 hotkeys, persisted to disk.
+- **Lua scripting** — write scripts in a Monaco editor, run them against the active tab; API includes `serial.send`, `serial.send_text`, `serial.send_hex`, `on_recv`, `log`, `delay`, `ui.toast`.
+- **Display-time regex filter** per tab (preserves the underlying buffer).
+- **Per-tab logging** with native save dialog.
+- **Ctrl+F search** with regex toggle and inline highlights.
+- **Auto-reconnect** per tab.
+- **Connection settings** — baud 300–921600, data bits 5/6/7/8, stop 1/2, parity None/Even/Odd, flow None/SW/HW, DTR/RTS toggles.
 
 ## Download
 
 Pre-built executables ship from the [Releases](../../releases) page.
-
-## Features (current)
-
-- One serial port at a time (multi-port arrives in Plan 2).
-- ASCII / Hex / Both views with ANSI escape stripping.
-- ASCII send with selectable line endings (None, `\r`, `\n`, `\r\n`).
-- Hex send (`AA BB 0D 0A` style).
-- DTR / RTS line control.
-- Command history (Up/Down in the send box).
-- Auto-scrolling terminal with manual clear.
-- Live RX/TX byte counters.
-
-## Connection settings
-
-- **Baud rate**: 300 to 921600
-- **Data bits**: 5, 6, 7, 8
-- **Stop bits**: 1, 2
-- **Parity**: None, Even, Odd
-- **Flow control**: None, Software (XON/XOFF), Hardware (RTS/CTS)
 
 ## Building from source
 
@@ -41,12 +29,9 @@ Pre-built executables ship from the [Releases](../../releases) page.
 
 Per-platform:
 
-- **Windows**: [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) with "Desktop development with C++". WebView2 is preinstalled on Windows 11.
-- **Linux**: `webkit2gtk-4.1`, `libssl-dev`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`. On Ubuntu/Debian:
-  ```bash
-  sudo apt install libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
-  ```
-- **macOS**: Xcode Command Line Tools.
+- **Windows** — Build Tools for Visual Studio 2022 with "Desktop development with C++". WebView2 is preinstalled on Windows 11.
+- **Linux** — `sudo apt install libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev`
+- **macOS** — Xcode Command Line Tools.
 
 ### Run in dev
 
@@ -67,12 +52,19 @@ Artifacts land in `src-tauri/target/release/bundle/`.
 
 ```
 RustCOM/
-├── src-tauri/        Rust backend (Tauri commands, serial workers)
+├── src-tauri/        Rust backend (Tauri commands, serial workers, Lua engine)
 ├── src/              Svelte 5 frontend
-├── docs/             Specs and plans
-└── legacy-egui/      Previous egui implementation, kept until Plan 3 finishes
+└── docs/             Specs and plans
 ```
+
+## Persistence
+
+Settings, macros, and scripts live in your OS user-data dir:
+
+- Windows: `%LOCALAPPDATA%\rustcom\`
+- macOS: `~/Library/Application Support/rustcom/`
+- Linux: `~/.local/share/rustcom/`
 
 ## License
 
-See LICENSE.
+MIT — see LICENSE.
