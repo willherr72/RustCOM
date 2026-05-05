@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use serde::Serialize;
 use serialport::SerialPort;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::error::{AppError, AppResult};
 use crate::port::config::PortConfig;
@@ -84,6 +84,7 @@ fn run_loop(
                         emit_tx(&app, tab_id, bytes);
                     } else if let Err(e) = result {
                         emit_disconnect(&app, tab_id, format!("write failed: {e}"));
+                        app.state::<crate::port::manager::PortManager>().evict(tab_id);
                         return;
                     }
                 }
@@ -97,7 +98,10 @@ fn run_loop(
                     return;
                 }
                 Err(TryRecvError::Empty) => break,
-                Err(TryRecvError::Disconnected) => return,
+                Err(TryRecvError::Disconnected) => {
+                    app.state::<crate::port::manager::PortManager>().evict(tab_id);
+                    return;
+                }
             }
         }
 
@@ -109,6 +113,7 @@ fn run_loop(
             }
             Err(e) => {
                 emit_disconnect(&app, tab_id, format!("read failed: {e}"));
+                app.state::<crate::port::manager::PortManager>().evict(tab_id);
                 return;
             }
         }

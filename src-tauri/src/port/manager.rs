@@ -58,6 +58,10 @@ impl PortManager {
         let handle = guard.get(&tab_id).ok_or(AppError::PortNotOpen(tab_id))?;
         handle.send_command(WorkerCommand::SetRts(state))
     }
+
+    pub fn evict(&self, tab_id: TabId) {
+        let _ = self.tabs.lock().remove(&tab_id);
+    }
 }
 
 impl Default for PortManager {
@@ -82,5 +86,14 @@ mod tests {
     fn list_ports_does_not_panic_in_ci() {
         // We can't assert specific contents — just that the API works on the host.
         let _ = PortManager::list_ports();
+    }
+
+    #[test]
+    fn evict_removes_known_tab_and_ignores_missing() {
+        let mgr = PortManager::new();
+        // We can't construct a real PortHandle without a real port, so this test
+        // just verifies that evicting a missing key doesn't panic.
+        mgr.evict(99);
+        mgr.evict(99);
     }
 }

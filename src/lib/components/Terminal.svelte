@@ -1,6 +1,6 @@
 <script lang="ts">
   import { activeTab, appendBytes, clearBuffer, patchActiveTab, SOLE_TAB_ID } from "$lib/stores/tabs";
-  import { onRx, onDisconnect, onTx, type RxPayload, type TxPayload, type DisconnectPayload } from "$lib/ipc";
+  import { ipc, onRx, onDisconnect, onTx, type RxPayload, type TxPayload, type DisconnectPayload } from "$lib/ipc";
   import { bytesToText, formatHex } from "$lib/format";
   import { onMount } from "svelte";
 
@@ -24,7 +24,10 @@
       });
       const undisc = await onDisconnect(SOLE_TAB_ID, (event) => {
         const payload = event.payload as DisconnectPayload;
-        patchActiveTab({ state: "disconnected", errorMessage: payload.reason });
+        patchActiveTab({ state: "disconnected", errorMessage: payload.reason, dtr: false, rts: false });
+        // Defensive: ensure the backend manager entry is reaped even if the worker
+        // didn't self-evict for some reason.
+        ipc.closePort(SOLE_TAB_ID).catch(() => undefined);
       });
       unrxs = [unrx, untx, undisc];
       mounted = true;
