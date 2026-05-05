@@ -57,22 +57,82 @@ pub fn spawn(
     config: PortConfig,
     app: AppHandle,
 ) -> AppResult<PortHandle> {
+    // First open is synchronous so a connect failure surfaces immediately.
     let port = config.to_serial().open()?;
     let (tx, rx) = mpsc::channel::<WorkerCommand>();
     let join = std::thread::Builder::new()
         .name(format!("rustcom-port-{tab_id}"))
-        .spawn(move || run_loop(tab_id, port, rx, app))
+        .spawn(move || run_supervisor(tab_id, port, config, rx, app))
         .map_err(|e| AppError::Io(e.to_string()))?;
 
     Ok(PortHandle { sender: tx, join })
 }
 
-fn run_loop(
+fn run_supervisor(
     tab_id: TabId,
-    mut port: Box<dyn SerialPort>,
+    initial_port: Box<dyn SerialPort>,
+    config: PortConfig,
     rx: Receiver<WorkerCommand>,
     app: AppHandle,
 ) {
+    let mut port = initial_port;
+    loop {
+        let outcome = run_loop(tab_id, port, &rx, &app);
+        match outcome {
+            LoopOutcome::Shutdown => {
+                app.state::<crate::port::manager::PortManager>().evict(tab_id);
+                return;
+            }
+            LoopOutcome::Disconnected(reason) => {
+                emit_disconnect(&app, tab_id, reason.clone());
+                if !config.auto_reconnect {
+                    app.state::<crate::port::manager::PortManager>().evict(tab_id);
+                    return;
+                }
+                // Reconnect loop: sleep, retry open, repeat. Honor Shutdown commands while sleeping.
+                let delay = Duration::from_millis(config.reconnect_delay_ms);
+                loop {
+                    if shutdown_pending(&rx) {
+                        app.state::<crate::port::manager::PortManager>().evict(tab_id);
+                        return;
+                    }
+                    let elapsed = std::time::Instant::now();
+                    while elapsed.elapsed() < delay {
+                        if shutdown_pending(&rx) {
+                            app.state::<crate::port::manager::PortManager>().evict(tab_id);
+                            return;
+                        }
+                        std::thread::sleep(Duration::from_millis(50));
+                    }
+                    match config.to_serial().open() {
+                        Ok(p) => {
+                            emit_reconnect(&app, tab_id);
+                            port = p;
+                            break;
+                        }
+                        Err(_) => continue,
+                    }
+                }
+            }
+        }
+    }
+}
+
+enum LoopOutcome {
+    Shutdown,
+    Disconnected(String),
+}
+
+fn shutdown_pending(rx: &Receiver<WorkerCommand>) -> bool {
+    matches!(rx.try_recv(), Ok(WorkerCommand::Shutdown) | Err(TryRecvError::Disconnected))
+}
+
+fn run_loop(
+    tab_id: TabId,
+    mut port: Box<dyn SerialPort>,
+    rx: &Receiver<WorkerCommand>,
+    app: &AppHandle,
+) -> LoopOutcome {
     let mut read_buf = vec![0u8; READ_BUFFER_SIZE];
     loop {
         // Drain pending commands.
@@ -83,11 +143,9 @@ fn run_loop(
                     let result = port.write_all(&bytes);
                     let _ = port.set_timeout(Duration::from_millis(10));
                     if result.is_ok() {
-                        emit_tx(&app, tab_id, bytes);
+                        emit_tx(app, tab_id, bytes);
                     } else if let Err(e) = result {
-                        emit_disconnect(&app, tab_id, format!("write failed: {e}"));
-                        app.state::<crate::port::manager::PortManager>().evict(tab_id);
-                        return;
+                        return LoopOutcome::Disconnected(format!("write failed: {e}"));
                     }
                 }
                 Ok(WorkerCommand::SetDtr(state)) => {
@@ -96,28 +154,17 @@ fn run_loop(
                 Ok(WorkerCommand::SetRts(state)) => {
                     let _ = port.write_request_to_send(state);
                 }
-                Ok(WorkerCommand::Shutdown) => {
-                    return;
-                }
+                Ok(WorkerCommand::Shutdown) => return LoopOutcome::Shutdown,
                 Err(TryRecvError::Empty) => break,
-                Err(TryRecvError::Disconnected) => {
-                    app.state::<crate::port::manager::PortManager>().evict(tab_id);
-                    return;
-                }
+                Err(TryRecvError::Disconnected) => return LoopOutcome::Shutdown,
             }
         }
 
         match port.read(&mut read_buf) {
-            Ok(n) if n > 0 => emit_rx(&app, tab_id, read_buf[..n].to_vec()),
+            Ok(n) if n > 0 => emit_rx(app, tab_id, read_buf[..n].to_vec()),
             Ok(_) => std::thread::sleep(Duration::from_millis(1)),
-            Err(e) if e.kind() == std::io::ErrorKind::TimedOut => {
-                // Normal — no data this tick.
-            }
-            Err(e) => {
-                emit_disconnect(&app, tab_id, format!("read failed: {e}"));
-                app.state::<crate::port::manager::PortManager>().evict(tab_id);
-                return;
-            }
+            Err(e) if e.kind() == std::io::ErrorKind::TimedOut => {}
+            Err(e) => return LoopOutcome::Disconnected(format!("read failed: {e}")),
         }
     }
 }
@@ -135,4 +182,13 @@ fn emit_tx(app: &AppHandle, tab_id: TabId, bytes: Vec<u8>) {
 fn emit_disconnect(app: &AppHandle, tab_id: TabId, reason: String) {
     let payload = DisconnectPayload { reason, ts: chrono::Local::now().timestamp_millis() };
     let _ = app.emit(&format!("disconnect://{tab_id}"), payload);
+}
+
+fn emit_reconnect(app: &AppHandle, tab_id: TabId) {
+    #[derive(Serialize, Clone)]
+    struct ReconnectPayload {
+        ts: i64,
+    }
+    let payload = ReconnectPayload { ts: chrono::Local::now().timestamp_millis() };
+    let _ = app.emit(&format!("reconnect://{tab_id}"), payload);
 }

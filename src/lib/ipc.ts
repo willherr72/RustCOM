@@ -41,6 +41,10 @@ export interface DisconnectPayload {
   ts: number;
 }
 
+export interface ReconnectPayload {
+  ts: number;
+}
+
 export type Direction = "rx" | "tx";
 
 export interface LogEntryDto {
@@ -111,4 +115,11 @@ export function onDisconnect(
   cb: EventCallback<DisconnectPayload>
 ): Promise<UnlistenFn> {
   return listen<DisconnectPayload>(`disconnect://${tabId}`, cb);
+}
+
+export function onReconnect(
+  tabId: TabId,
+  cb: EventCallback<ReconnectPayload>
+): Promise<UnlistenFn> {
+  return listen<ReconnectPayload>(`reconnect://${tabId}`, cb);
 }

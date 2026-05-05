@@ -169,6 +169,18 @@
     </select>
   </label>
 
+  <label class="toggle">
+    <input
+      type="checkbox"
+      checked={$activeTab.config.auto_reconnect ?? false}
+      onchange={(e) => patchActiveTab({
+        config: { ...$activeTab.config, auto_reconnect: (e.currentTarget as HTMLInputElement).checked },
+      })}
+      disabled={$activeTab.state === "connected"}
+    />
+    Auto-reconnect
+  </label>
+
   {#if $activeTab.state === "connected"}
     <button class="primary danger" onclick={disconnect}>Disconnect</button>
   {:else}
@@ -211,4 +223,5 @@
   .signals-row button { flex: 1; }
   .signals-row button.active { background: var(--ok-bg); color: var(--ok); }
   .err { color: var(--err); font-size: 11px; margin: 4px 0 0; }
+  .toggle { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--fg-muted); margin-top: 6px; }
 </style>

@@ -5,6 +5,7 @@ import {
   onRx,
   onTx,
   onDisconnect,
+  onReconnect,
   type RxPayload,
   type TxPayload,
   type DisconnectPayload,
@@ -32,18 +33,32 @@ async function subscribe(id: TabId) {
   });
   const undisc = await onDisconnect(id, (event) => {
     const p = event.payload as DisconnectPayload;
-    // Patch any tab matching the id, not just the active one.
+    let willReconnect = false;
     tabs.update((list) =>
-      list.map((t) =>
-        t.id === id
-          ? { ...t, state: "disconnected", errorMessage: p.reason, dtr: false, rts: false }
-          : t
-      )
+      list.map((t) => {
+        if (t.id !== id) return t;
+        willReconnect = !!t.config.auto_reconnect;
+        const next: Tab = {
+          ...t,
+          state: willReconnect ? "reconnecting" : "disconnected",
+          errorMessage: p.reason,
+          dtr: false,
+          rts: false,
+        };
+        return next;
+      })
     );
-    ipc.closePort(id).catch(() => undefined);
+    if (!willReconnect) {
+      ipc.closePort(id).catch(() => undefined);
+    }
+  });
+  const unre = await onReconnect(id, (_event) => {
+    tabs.update((list) =>
+      list.map((t) => (t.id === id ? { ...t, state: "connected", errorMessage: null } : t))
+    );
   });
 
-  subs.set(id, [unrx, untx, undisc]);
+  subs.set(id, [unrx, untx, undisc, unre]);
 }
 
 function unsubscribe(id: TabId) {
