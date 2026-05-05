@@ -5,7 +5,10 @@ pub mod port;
 pub mod script;
 pub mod storage;
 
+use tauri::Manager;
+
 use port::manager::PortManager;
+use script::engine::ScriptEngine;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,6 +17,13 @@ pub fn run() {
         .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .manage(PortManager::new())
+        .manage(ScriptEngine::new())
+        .setup(|app| {
+            let handle = app.handle().clone();
+            let engine = handle.state::<ScriptEngine>();
+            engine.start(handle.clone()).ok();
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::ports::list_ports,
             commands::ports::open_port,
@@ -28,6 +38,11 @@ pub fn run() {
             commands::logs::save_log,
             commands::settings::load_settings,
             commands::settings::save_settings,
+            commands::scripts::list_scripts,
+            commands::scripts::save_script,
+            commands::scripts::delete_script,
+            commands::scripts::script_run,
+            commands::scripts::script_stop,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

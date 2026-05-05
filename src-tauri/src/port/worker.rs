@@ -170,8 +170,12 @@ fn run_loop(
 }
 
 fn emit_rx(app: &AppHandle, tab_id: TabId, bytes: Vec<u8>) {
-    let payload = RxPayload { bytes, ts: chrono::Local::now().timestamp_millis() };
+    let payload = RxPayload { bytes: bytes.clone(), ts: chrono::Local::now().timestamp_millis() };
     let _ = app.emit(&format!("rx://{tab_id}"), payload);
+
+    if let Some(engine) = app.try_state::<crate::script::engine::ScriptEngine>() {
+        engine.dispatch_recv(tab_id, bytes);
+    }
 }
 
 fn emit_tx(app: &AppHandle, tab_id: TabId, bytes: Vec<u8>) {
