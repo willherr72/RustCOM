@@ -25,6 +25,8 @@ pub fn run() {
             commands::macros::save_macro,
             commands::macros::delete_macro,
             commands::logs::save_log,
+            commands::settings::load_settings,
+            commands::settings::save_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
