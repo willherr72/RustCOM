@@ -159,7 +159,8 @@
   .edit input, .edit select, .edit textarea { font-family: var(--font-mono); font-size: 11px; }
   .edit textarea { resize: vertical; min-height: 36px; padding: 6px 8px; border-radius: var(--radius-md); background: var(--bg); color: var(--fg); border: 1px solid transparent; }
   .edit textarea:focus { border-color: var(--accent); outline: none; }
-  .row { display: flex; gap: 4px; }
-  .row.gap { gap: 6px; }
-  .row select { flex: 1; }
+  .row { display: flex; gap: 4px; min-width: 0; }
+  .row.gap { gap: 6px; flex-wrap: wrap; }
+  .row select { flex: 1 1 0; min-width: 0; }
+  .edit input, .edit textarea { box-sizing: border-box; width: 100%; }
 </style>
