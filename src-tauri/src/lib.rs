@@ -2,6 +2,7 @@ pub mod commands;
 pub mod error;
 pub mod hex;
 pub mod port;
+pub mod storage;
 
 use port::manager::PortManager;
 
