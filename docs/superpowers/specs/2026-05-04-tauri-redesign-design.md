@@ -157,7 +157,7 @@ A v1 release is done when:
 
 ## 11. Open questions (intentionally deferred)
 
-- Plot/graph view of numeric RX data — out of scope for v1.
+- Plot/graph view of numeric RX data — **planned for v2**.
+- Multi-tab Lua scripting — **planned for v2**.
 - File transfer (XMODEM/YMODEM) — out of scope.
-- Multi-tab Lua scripting — explicitly v2.
-- Session restore — explicitly v2 if requested later.
+- Session restore — out of scope unless requested later.
