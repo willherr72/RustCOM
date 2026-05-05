@@ -29,3 +29,4 @@ chrono = "0.4"
 thiserror = "1"
 parking_lot = "0.12"
 dirs = "5"
+mlua = { version = "0.10", features = ["lua54", "vendored", "send"] }
