@@ -14,11 +14,13 @@
   import { startPolling, stopPolling } from "$lib/stores/ports";
   import { startEventRouter, stopEventRouter } from "$lib/eventRouter";
   import { macros } from "$lib/stores/macros";
+  import { loadSettings } from "$lib/stores/settings";
   import { get } from "svelte/store";
 
   let active = $state<ActivityKey>("connection");
 
-  onMount(() => {
+  onMount(async () => {
+    await loadSettings();
     startPolling();
     startEventRouter();
     window.addEventListener("keydown", onWindowKey);

@@ -2,10 +2,26 @@
   import { ipc, type DataBits, type FlowControl, type Parity, type StopBits } from "$lib/ipc";
   import { availablePorts } from "$lib/stores/ports";
   import { activeTab, activeTabId, patchActiveTab } from "$lib/stores/tabs";
+  import { persistDefaults } from "$lib/stores/settings";
 
   const BAUD_RATES = [300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
 
   let connecting = $state(false);
+
+  async function persistAsDefault() {
+    const c = $activeTab.config;
+    await persistDefaults({
+      baud_rate: c.baud_rate,
+      data_bits: c.data_bits,
+      stop_bits: c.stop_bits,
+      parity: c.parity,
+      flow_control: c.flow_control,
+      line_ending: $activeTab.lineEnding,
+      send_mode: $activeTab.sendMode,
+      auto_reconnect: c.auto_reconnect ?? false,
+      reconnect_delay_ms: c.reconnect_delay_ms ?? 2000,
+    });
+  }
 
   async function connect() {
     const tab = $activeTab;
@@ -161,6 +177,14 @@
     </button>
   {/if}
 
+  <button
+    onclick={persistAsDefault}
+    title="Save current settings as defaults for new tabs"
+    class="save-default"
+  >
+    Save as default
+  </button>
+
   {#if $activeTab.errorMessage}
     <p class="err">{$activeTab.errorMessage}</p>
   {/if}
@@ -182,6 +206,7 @@
   select { width: 100%; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   button.primary { width: 100%; margin-top: 8px; padding: 8px 0; }
+  .save-default { width: 100%; margin-top: 4px; padding: 4px 0; font-size: 10px; }
   .signals-row { display: flex; gap: 6px; }
   .signals-row button { flex: 1; }
   .signals-row button.active { background: var(--ok-bg); color: var(--ok); }

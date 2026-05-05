@@ -60,6 +60,22 @@ export interface Macro {
   hotkey?: string | null;
 }
 
+export interface DefaultsConfig {
+  baud_rate: number;
+  data_bits: DataBits;
+  stop_bits: StopBits;
+  parity: Parity;
+  flow_control: FlowControl;
+  line_ending: LineEnding;
+  send_mode: SendMode;
+  auto_reconnect: boolean;
+  reconnect_delay_ms: number;
+}
+
+export interface Settings {
+  defaults: DefaultsConfig;
+}
+
 export const ipc = {
   listPorts: () => invoke<PortInfo[]>("list_ports"),
   openPort: (tabId: TabId, config: PortConfig) =>
@@ -78,6 +94,8 @@ export const ipc = {
   deleteMacro: (id: string) => invoke<Macro[]>("delete_macro", { id }),
   saveLog: (path: string, entries: LogEntryDto[]) =>
     invoke<string>("save_log", { path, entries }),
+  loadSettings: () => invoke<Settings>("load_settings"),
+  saveSettings: (settings: Settings) => invoke<Settings>("save_settings", { settings }),
 };
 
 export function onRx(tabId: TabId, cb: EventCallback<RxPayload>): Promise<UnlistenFn> {

@@ -1,5 +1,6 @@
 import { writable, derived, get, type Readable, type Writable } from "svelte/store";
 import type { Direction, LineEnding, PortConfig, SendMode, TabId } from "$lib/ipc";
+import { snapshotDefaults } from "$lib/stores/settings";
 
 export type { Direction };
 
@@ -44,15 +45,16 @@ export interface Tab {
 }
 
 function defaultConfig(): PortConfig {
+  const d = snapshotDefaults();
   return {
     port_name: "",
-    baud_rate: 9600,
-    data_bits: "eight",
-    stop_bits: "one",
-    parity: "none",
-    flow_control: "none",
-    auto_reconnect: false,
-    reconnect_delay_ms: 2000,
+    baud_rate: d.baud_rate,
+    data_bits: d.data_bits,
+    stop_bits: d.stop_bits,
+    parity: d.parity,
+    flow_control: d.flow_control,
+    auto_reconnect: d.auto_reconnect,
+    reconnect_delay_ms: d.reconnect_delay_ms,
   };
 }
 
@@ -63,6 +65,7 @@ function allocTabId(): TabId {
 }
 
 function defaultTab(id: TabId = allocTabId()): Tab {
+  const d = snapshotDefaults();
   return {
     id,
     config: defaultConfig(),
@@ -73,8 +76,8 @@ function defaultTab(id: TabId = allocTabId()): Tab {
     viewMode: "ascii",
     stripAnsi: true,
     autoScroll: true,
-    sendMode: "ascii",
-    lineEnding: "crlf",
+    sendMode: d.send_mode,
+    lineEnding: d.line_ending,
     dtr: false,
     rts: false,
     errorMessage: null,
