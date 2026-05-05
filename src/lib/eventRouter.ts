@@ -1,11 +1,12 @@
 import { get } from "svelte/store";
-import { tabs, appendBytes, pushLog, type Tab } from "$lib/stores/tabs";
+import { tabs, activeTabId, appendBytes, pushLog, type Tab } from "$lib/stores/tabs";
 import {
   ipc,
   onRx,
   onTx,
   onDisconnect,
   onReconnect,
+  onScriptLog,
   type RxPayload,
   type TxPayload,
   type DisconnectPayload,
@@ -69,6 +70,7 @@ function unsubscribe(id: TabId) {
 }
 
 let stopReact: Unsub | null = null;
+let stopLog: Unsub | null = null;
 
 export function startEventRouter() {
   if (stopReact) return;
@@ -83,12 +85,23 @@ export function startEventRouter() {
     // Drop subs for closed tabs.
     for (const id of [...subs.keys()]) if (!present.has(id)) unsubscribe(id);
   });
+
+  void (async () => {
+    stopLog = await onScriptLog((e) => {
+      const id = get(activeTabId);
+      pushLog(id, "rx", new TextEncoder().encode(`[lua] ${e.payload.msg}`), e.payload.ts);
+    });
+  })();
 }
 
 export function stopEventRouter() {
   if (stopReact) {
     stopReact();
     stopReact = null;
+  }
+  if (stopLog) {
+    stopLog();
+    stopLog = null;
   }
   for (const id of [...subs.keys()]) unsubscribe(id);
 }
