@@ -8,17 +8,21 @@
   import SendRow from "$lib/components/SendRow.svelte";
   import ConnectionPanel from "$lib/components/panels/ConnectionPanel.svelte";
   import MacrosPanel from "$lib/components/panels/MacrosPanel.svelte";
-  import { activeTab } from "$lib/stores/tabs";
+  import { activeTab, activeTabId } from "$lib/stores/tabs";
   import { startPolling, stopPolling } from "$lib/stores/ports";
   import { startEventRouter, stopEventRouter } from "$lib/eventRouter";
+  import { macros } from "$lib/stores/macros";
+  import { get } from "svelte/store";
 
   let active = $state<ActivityKey>("connection");
 
   onMount(() => {
     startPolling();
     startEventRouter();
+    window.addEventListener("keydown", onWindowKey);
   });
   onDestroy(() => {
+    window.removeEventListener("keydown", onWindowKey);
     stopEventRouter();
     stopPolling();
   });
@@ -33,6 +37,31 @@
 
   function parityLabel(p: string) {
     return ({ none: "N", even: "E", odd: "O" } as const)[p as "none" | "even" | "odd"];
+  }
+
+  function onWindowKey(e: KeyboardEvent) {
+    // F1–F12 trigger macros if assigned. Skip when focus is in an input/textarea
+    // so users can still rebind in OS-controlled forms etc.
+    if (!/^F([1-9]|1[0-2])$/.test(e.key)) return;
+    const tag = (e.target as HTMLElement | null)?.tagName?.toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select") return;
+
+    const m = get(macros).find((x) => x.hotkey === e.key);
+    if (!m) return;
+    e.preventDefault();
+    void runMacro(m);
+  }
+
+  async function runMacro(m: { mode: "ascii" | "hex"; payload: string; line_ending?: import("$lib/ipc").LineEnding | null }) {
+    const tab = get(activeTab);
+    if (tab.state !== "connected") return;
+    const { ipc } = await import("$lib/ipc");
+    const id = get(activeTabId);
+    if (m.mode === "ascii") {
+      await ipc.sendText(id, m.payload, (m.line_ending ?? "none"));
+    } else {
+      await ipc.sendHex(id, m.payload);
+    }
   }
 </script>
 
