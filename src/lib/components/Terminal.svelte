@@ -2,6 +2,7 @@
   import { activeTab, activeTabId, clearBuffer, patchActiveTab } from "$lib/stores/tabs";
   import { bytesToText, formatHex } from "$lib/format";
   import { applyFilter } from "$lib/filter";
+  import { findMatches, type MatchRange } from "$lib/search";
   import SearchOverlay from "$lib/components/SearchOverlay.svelte";
 
   let scrollEl: HTMLDivElement | undefined = $state();
@@ -25,6 +26,33 @@
       });
     }
   });
+
+  let matches = $derived(
+    $activeTab.searchOpen
+      ? findMatches(display, $activeTab.searchPattern, $activeTab.searchUseRegex).matches
+      : []
+  );
+
+  function renderHighlighted(text: string, ranges: MatchRange[], current: number): string {
+    if (ranges.length === 0) return escapeHtml(text);
+    let out = "";
+    let pos = 0;
+    ranges.forEach((r, i) => {
+      if (r.start > pos) out += escapeHtml(text.slice(pos, r.start));
+      const cls = i === current ? "match current" : "match";
+      out += `<mark class="${cls}">${escapeHtml(text.slice(r.start, r.end))}</mark>`;
+      pos = r.end;
+    });
+    if (pos < text.length) out += escapeHtml(text.slice(pos));
+    return out;
+  }
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
 </script>
 
 <div class="bar">
@@ -61,7 +89,7 @@
 <div class="term-wrap">
   <SearchOverlay displayText={display} />
   <div class="term" bind:this={scrollEl}>
-    <pre>{display}</pre>
+    <pre>{@html renderHighlighted(display, matches, $activeTab.searchMatchIndex)}</pre>
   </div>
 </div>
 
@@ -97,5 +125,15 @@
     color: var(--rx);
     white-space: pre-wrap;
     word-break: break-word;
+  }
+  pre :global(mark.match) {
+    background: var(--warn-bg);
+    color: var(--warn);
+    padding: 0 1px;
+    border-radius: 2px;
+  }
+  pre :global(mark.match.current) {
+    background: var(--accent);
+    color: var(--accent-fg);
   }
 </style>
