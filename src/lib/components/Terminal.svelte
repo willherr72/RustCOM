@@ -1,14 +1,16 @@
 <script lang="ts">
   import { activeTab, activeTabId, clearBuffer, patchActiveTab } from "$lib/stores/tabs";
   import { bytesToText, formatHex } from "$lib/format";
+  import { applyFilter } from "$lib/filter";
 
   let scrollEl: HTMLDivElement | undefined = $state();
 
   let display = $derived.by(() => {
     const t = $activeTab;
-    if (t.viewMode === "ascii") return bytesToText(t.buffer, t.stripAnsi);
+    const filter = (text: string) => applyFilter(text, t.filterPattern, t.filterEnabled).text;
+    if (t.viewMode === "ascii") return filter(bytesToText(t.buffer, t.stripAnsi));
     if (t.viewMode === "hex") return formatHex(t.buffer);
-    const ascii = bytesToText(t.buffer, t.stripAnsi);
+    const ascii = filter(bytesToText(t.buffer, t.stripAnsi));
     const hex = formatHex(t.buffer);
     return `=== HEX ===\n${hex}\n=== ASCII ===\n${ascii}`;
   });
