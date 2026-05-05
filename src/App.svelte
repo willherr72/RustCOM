@@ -9,11 +9,18 @@
   import ConnectionPanel from "$lib/components/panels/ConnectionPanel.svelte";
   import { activeTab } from "$lib/stores/tabs";
   import { startPolling, stopPolling } from "$lib/stores/ports";
+  import { startEventRouter, stopEventRouter } from "$lib/eventRouter";
 
   let active = $state<ActivityKey>("connection");
 
-  onMount(() => startPolling());
-  onDestroy(() => stopPolling());
+  onMount(() => {
+    startPolling();
+    startEventRouter();
+  });
+  onDestroy(() => {
+    stopEventRouter();
+    stopPolling();
+  });
 
   function dataLabel(d: string) {
     return ({ five: "5", six: "6", seven: "7", eight: "8" } as const)[d as "five" | "six" | "seven" | "eight"];
