@@ -27,8 +27,6 @@ export interface Tab {
   historyIndex: number; // -1 == not navigating
 }
 
-export const SOLE_TAB_ID: TabId = 1;
-
 function defaultConfig(): PortConfig {
   return {
     port_name: "",
@@ -42,9 +40,15 @@ function defaultConfig(): PortConfig {
   };
 }
 
-function defaultTab(): Tab {
+let nextTabId: TabId = 1;
+
+function allocTabId(): TabId {
+  return nextTabId++;
+}
+
+function defaultTab(id: TabId = allocTabId()): Tab {
   return {
-    id: SOLE_TAB_ID,
+    id,
     config: defaultConfig(),
     state: "disconnected",
     buffer: new Uint8Array(0),
@@ -64,7 +68,35 @@ function defaultTab(): Tab {
 }
 
 export const tabs: Writable<Tab[]> = writable([defaultTab()]);
-export const activeTabId: Writable<TabId> = writable(SOLE_TAB_ID);
+export const activeTabId: Writable<TabId> = writable(1);
+
+export function addTab(): TabId {
+  const tab = defaultTab();
+  tabs.update((list) => [...list, tab]);
+  activeTabId.set(tab.id);
+  return tab.id;
+}
+
+export function closeTab(id: TabId) {
+  tabs.update((list) => {
+    const next = list.filter((t) => t.id !== id);
+    return next.length === 0 ? [defaultTab()] : next;
+  });
+  // If the closed tab was active, switch to the last remaining tab.
+  const current = get(activeTabId);
+  if (current === id) {
+    const list = get(tabs);
+    activeTabId.set(list[list.length - 1].id);
+  }
+}
+
+export function setActiveTab(id: TabId) {
+  activeTabId.set(id);
+}
+
+export function getTab(id: TabId): Tab | undefined {
+  return get(tabs).find((t) => t.id === id);
+}
 
 export const activeTab: Readable<Tab> = derived(
   [tabs, activeTabId],
