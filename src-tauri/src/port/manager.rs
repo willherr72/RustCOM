@@ -37,9 +37,7 @@ impl PortManager {
             guard.remove(&tab_id).ok_or(AppError::PortNotOpen(tab_id))?
         };
         let _ = handle.send_command(WorkerCommand::Shutdown);
-        if let Some(join) = handle.join {
-            let _ = join.join();
-        }
+        let _ = handle.join.join();
         Ok(())
     }
 

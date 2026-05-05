@@ -41,7 +41,7 @@ const READ_BUFFER_SIZE: usize = 1024;
 
 pub struct PortHandle {
     pub sender: Sender<WorkerCommand>,
-    pub join: Option<JoinHandle<()>>,
+    pub join: JoinHandle<()>,
 }
 
 impl PortHandle {
@@ -64,7 +64,7 @@ pub fn spawn(
         .spawn(move || run_loop(tab_id, port, rx, app))
         .map_err(|e| AppError::Io(e.to_string()))?;
 
-    Ok(PortHandle { sender: tx, join: Some(join) })
+    Ok(PortHandle { sender: tx, join })
 }
 
 fn run_loop(
