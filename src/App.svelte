@@ -11,22 +11,30 @@
   import FilterPanel from "$lib/components/panels/FilterPanel.svelte";
   import LogsPanel from "$lib/components/panels/LogsPanel.svelte";
   import ScriptsPanel from "$lib/components/panels/ScriptsPanel.svelte";
+  import ToastStack from "$lib/components/ToastStack.svelte";
   import { activeTab, activeTabId, patchActiveTab } from "$lib/stores/tabs";
   import { startPolling, stopPolling } from "$lib/stores/ports";
   import { startEventRouter, stopEventRouter } from "$lib/eventRouter";
   import { macros } from "$lib/stores/macros";
   import { loadSettings } from "$lib/stores/settings";
+  import { onToast } from "$lib/ipc";
+  import { pushToast } from "$lib/stores/toasts";
   import { get } from "svelte/store";
 
   let active = $state<ActivityKey>("connection");
+  let unToast: (() => void) | null = null;
 
   onMount(async () => {
     await loadSettings();
     startPolling();
     startEventRouter();
     window.addEventListener("keydown", onWindowKey);
+    unToast = await onToast((e) => {
+      pushToast(e.payload.level, e.payload.msg, e.payload.ts);
+    });
   });
   onDestroy(() => {
+    if (unToast) unToast();
     window.removeEventListener("keydown", onWindowKey);
     stopEventRouter();
     stopPolling();
@@ -108,6 +116,7 @@
     txBytes={$activeTab.txBytes}
     settingsLabel={`${$activeTab.config.baud_rate} ${dataLabel($activeTab.config.data_bits)}-${parityLabel($activeTab.config.parity)}-${stopLabel($activeTab.config.stop_bits)}`}
   />
+  <ToastStack />
 </div>
 
 <style>
