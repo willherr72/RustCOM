@@ -18,6 +18,9 @@ pub fn run() {
             commands::ports::send_hex,
             commands::ports::set_dtr,
             commands::ports::set_rts,
+            commands::macros::list_macros,
+            commands::macros::save_macro,
+            commands::macros::delete_macro,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
