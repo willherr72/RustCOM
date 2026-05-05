@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { tabs, activeTabId, appendBytes, pushLog, type Tab } from "$lib/stores/tabs";
+import { tabs, activeTabId, appendBytes, pushLog, getTab, type Tab } from "$lib/stores/tabs";
 import {
   ipc,
   onRx,
@@ -12,6 +12,7 @@ import {
   type DisconnectPayload,
   type TabId,
 } from "$lib/ipc";
+import { pushToast } from "$lib/stores/toasts";
 
 type Unsub = () => void;
 
@@ -87,8 +88,21 @@ export function startEventRouter() {
   });
 
   void (async () => {
+    let lastWarnAt = 0;
     stopLog = await onScriptLog((e) => {
       const id = get(activeTabId);
+      const tab = getTab(id);
+      if (tab && !tab.loggingEnabled) {
+        const now = Date.now();
+        if (now - lastWarnAt > 30_000) {
+          lastWarnAt = now;
+          pushToast(
+            "warn",
+            "Lua log() output is dropping — enable Capture in the Logs panel to record it.",
+          );
+        }
+        return;
+      }
       pushLog(id, "rx", new TextEncoder().encode(`[lua] ${e.payload.msg}`), e.payload.ts);
     });
   })();
