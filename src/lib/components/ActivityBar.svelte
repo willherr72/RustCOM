@@ -7,7 +7,7 @@
 
   const items: Array<{ key: ActivityKey; icon: string; title: string }> = [
     { key: "connection", icon: "⚙", title: "Connection" },
-    { key: "macros",     icon: "▶", title: "Macros (Plan 2)" },
+    { key: "macros",     icon: "▶", title: "Macros" },
     { key: "scripts",    icon: "{}", title: "Scripts (Plan 3)" },
     { key: "filter",     icon: "⌕", title: "Filter (Plan 2)" },
     { key: "logs",       icon: "≡", title: "Logs (Plan 2)" },

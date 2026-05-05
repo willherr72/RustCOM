@@ -7,6 +7,7 @@
   import Terminal from "$lib/components/Terminal.svelte";
   import SendRow from "$lib/components/SendRow.svelte";
   import ConnectionPanel from "$lib/components/panels/ConnectionPanel.svelte";
+  import MacrosPanel from "$lib/components/panels/MacrosPanel.svelte";
   import { activeTab } from "$lib/stores/tabs";
   import { startPolling, stopPolling } from "$lib/stores/ports";
   import { startEventRouter, stopEventRouter } from "$lib/eventRouter";
@@ -42,8 +43,10 @@
     <aside class="side">
       {#if active === "connection"}
         <ConnectionPanel />
+      {:else if active === "macros"}
+        <MacrosPanel />
       {:else}
-        <div class="muted-pad">Coming in a later plan.</div>
+        <div class="muted-pad">Coming in Plan 3.</div>
       {/if}
     </aside>
     <main class="main">
