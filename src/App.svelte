@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount, onDestroy } from "svelte";
   import TitleBar from "$lib/components/TitleBar.svelte";
   import ActivityBar, { type ActivityKey } from "$lib/components/ActivityBar.svelte";
   import StatusBar from "$lib/components/StatusBar.svelte";
@@ -6,12 +7,17 @@
   import Terminal from "$lib/components/Terminal.svelte";
   import SendRow from "$lib/components/SendRow.svelte";
   import ConnectionPanel from "$lib/components/panels/ConnectionPanel.svelte";
+  import { activeTab } from "$lib/stores/tabs";
+  import { startPolling, stopPolling } from "$lib/stores/ports";
 
   let active = $state<ActivityKey>("connection");
+
+  onMount(() => startPolling());
+  onDestroy(() => stopPolling());
 </script>
 
 <div class="app">
-  <TitleBar />
+  <TitleBar connected={$activeTab.state === "connected"} />
   <div class="body">
     <ActivityBar bind:active />
     <aside class="side">
@@ -22,7 +28,10 @@
       {/if}
     </aside>
     <main class="main">
-      <TabStrip />
+      <TabStrip
+        label={$activeTab.config.port_name ? $activeTab.config.port_name : "COM —"}
+        active
+      />
       <Terminal />
       <SendRow />
     </main>
