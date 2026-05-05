@@ -1,76 +1,78 @@
-# RustCOM - COM Port Analyzer
+# RustCOM — COM Port Analyzer
 
-A COM port analyzer built with Rust and egui. Provides serial communication tools with a dark-themed GUI.
+A serial-port analyzer built with Tauri 2 + Svelte 5. Cross-platform desktop binary, native serial I/O, modern UI.
+
+## Status
+
+- **Plan 1 (current)** — single-port end-to-end: connect, RX streaming, ASCII/Hex/Both view, ANSI strip, ASCII/Hex send with line endings, DTR/RTS, command history.
+- **Plan 2 (next)** — multi-port tabs, send macros, regex filter, logging, in-buffer search.
+- **Plan 3 (after)** — Lua scripting (mlua + Monaco editor), polish, packaging, plot view roadmap.
 
 ## Download
 
-Pre-built Windows executables are available on the [Releases](../../releases) page. Download `rustcom.exe` and run it directly — no installation needed.
+Pre-built executables ship from the [Releases](../../releases) page.
 
-## Features
+## Features (current)
 
-- **Auto-detect COM ports** with automatic scanning for new/removed devices
-- **ASCII, Hex, and dual view modes** with proper hex dump formatting
-- **ASCII and Hex send modes** — type text or raw hex bytes (`AA BB 0D 0A`)
-- **Configurable line endings** — None, `\r`, `\n`, `\r\n`
-- **DTR/RTS signal control**
-- **Data logging** with timestamped entries and file export
-- **Regex filtering** on incoming data
-- **Auto-reconnect** on connection loss
-- **Virtual COM port** creation via com0com (Windows) or socat (Linux)
-- **Byte counters** for TX and RX
+- One serial port at a time (multi-port arrives in Plan 2).
+- ASCII / Hex / Both views with ANSI escape stripping.
+- ASCII send with selectable line endings (None, `\r`, `\n`, `\r\n`).
+- Hex send (`AA BB 0D 0A` style).
+- DTR / RTS line control.
+- Command history (Up/Down in the send box).
+- Auto-scrolling terminal with manual clear.
+- Live RX/TX byte counters.
 
-## Connection Settings
+## Connection settings
 
-- **Baud Rate**: 300 to 921600
-- **Data Bits**: 5, 6, 7, 8
-- **Stop Bits**: 1, 2
+- **Baud rate**: 300 to 921600
+- **Data bits**: 5, 6, 7, 8
+- **Stop bits**: 1, 2
 - **Parity**: None, Even, Odd
-- **Flow Control**: None, Software (XON/XOFF), Hardware (RTS/CTS)
+- **Flow control**: None, Software (XON/XOFF), Hardware (RTS/CTS)
 
-## Building from Source
+## Building from source
 
 ### Prerequisites
 
-- [Rust](https://rustup.rs/)
-- Windows: [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) with "Desktop development with C++"
+- [Rust](https://rustup.rs/) 1.77+
+- [Node.js](https://nodejs.org/) 20+
+- Tauri CLI 2: `cargo install tauri-cli --version "^2.0.0" --locked`
 
-### Build and Run
+Per-platform:
+
+- **Windows**: [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) with "Desktop development with C++". WebView2 is preinstalled on Windows 11.
+- **Linux**: `webkit2gtk-4.1`, `libssl-dev`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`. On Ubuntu/Debian:
+  ```bash
+  sudo apt install libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+  ```
+- **macOS**: Xcode Command Line Tools.
+
+### Run in dev
 
 ```bash
-cargo run --release
+npm install
+cargo tauri dev
 ```
 
-The compiled exe will be at `target/release/rustcom.exe`.
+### Build a release binary
 
-## Project Structure
+```bash
+cargo tauri build
+```
+
+Artifacts land in `src-tauri/target/release/bundle/`.
+
+## Project layout
 
 ```
 RustCOM/
-├── Cargo.toml
-├── build.rs            # Windows icon embedding
-├── src/
-│   ├── main.rs         # Entry point
-│   ├── app.rs          # App struct, constants, display logic
-│   ├── serial.rs       # Serial enums, connect/disconnect/send
-│   ├── ui.rs           # GUI rendering
-│   ├── hex.rs          # Hex formatting and parsing
-│   ├── logging.rs      # Data logging and file export
-│   └── virtual_com.rs  # Virtual COM port creation
-└── README.md
+├── src-tauri/        Rust backend (Tauri commands, serial workers)
+├── src/              Svelte 5 frontend
+├── docs/             Specs and plans
+└── legacy-egui/      Previous egui implementation, kept until Plan 3 finishes
 ```
-
-## Dependencies
-
-- **eframe** / **egui** — Immediate-mode GUI
-- **serialport** — Serial port communication
-- **chrono** — Timestamps
-- **regex** — Data filtering
-
-## Troubleshooting
-
-- **Port access denied**: Close other apps using the port. On Linux, add yourself to `dialout`: `sudo usermod -a -G dialout $USER`
-- **Port not listed**: Click Refresh or enable auto-scan in the Advanced section.
 
 ## License
 
-See LICENSE file for details.
+See LICENSE.
