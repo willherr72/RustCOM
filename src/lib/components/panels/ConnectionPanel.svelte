@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ipc, type DataBits, type FlowControl, type Parity, type StopBits } from "$lib/ipc";
   import { availablePorts } from "$lib/stores/ports";
-  import { activeTab, patchActiveTab, SOLE_TAB_ID } from "$lib/stores/tabs";
+  import { activeTab, activeTabId, patchActiveTab } from "$lib/stores/tabs";
 
   const BAUD_RATES = [300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
 
@@ -16,7 +16,7 @@
     connecting = true;
     patchActiveTab({ state: "connecting", errorMessage: null });
     try {
-      await ipc.openPort(SOLE_TAB_ID, tab.config);
+      await ipc.openPort($activeTabId, tab.config);
       patchActiveTab({ state: "connected" });
     } catch (e) {
       patchActiveTab({ state: "disconnected", errorMessage: String(e) });
@@ -27,7 +27,7 @@
 
   async function disconnect() {
     try {
-      await ipc.closePort(SOLE_TAB_ID);
+      await ipc.closePort($activeTabId);
     } catch (e) {
       patchActiveTab({ errorMessage: String(e) });
     }
@@ -44,7 +44,7 @@
   async function toggleDtr() {
     const next = !$activeTab.dtr;
     try {
-      await ipc.setDtr(SOLE_TAB_ID, next);
+      await ipc.setDtr($activeTabId, next);
       patchActiveTab({ dtr: next });
     } catch (e) {
       patchActiveTab({ errorMessage: String(e) });
@@ -54,7 +54,7 @@
   async function toggleRts() {
     const next = !$activeTab.rts;
     try {
-      await ipc.setRts(SOLE_TAB_ID, next);
+      await ipc.setRts($activeTabId, next);
       patchActiveTab({ rts: next });
     } catch (e) {
       patchActiveTab({ errorMessage: String(e) });
