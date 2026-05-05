@@ -9,6 +9,7 @@
   import ConnectionPanel from "$lib/components/panels/ConnectionPanel.svelte";
   import MacrosPanel from "$lib/components/panels/MacrosPanel.svelte";
   import FilterPanel from "$lib/components/panels/FilterPanel.svelte";
+  import LogsPanel from "$lib/components/panels/LogsPanel.svelte";
   import { activeTab, activeTabId } from "$lib/stores/tabs";
   import { startPolling, stopPolling } from "$lib/stores/ports";
   import { startEventRouter, stopEventRouter } from "$lib/eventRouter";
@@ -77,6 +78,8 @@
         <MacrosPanel />
       {:else if active === "filter"}
         <FilterPanel />
+      {:else if active === "logs"}
+        <LogsPanel />
       {:else}
         <div class="muted-pad">Coming in Plan 3.</div>
       {/if}

@@ -10,7 +10,7 @@
     { key: "macros",     icon: "▶", title: "Macros" },
     { key: "scripts",    icon: "{}", title: "Scripts (Plan 3)" },
     { key: "filter",     icon: "⌕", title: "Filter" },
-    { key: "logs",       icon: "≡", title: "Logs (Plan 2)" },
+    { key: "logs",       icon: "≡", title: "Logs" },
   ];
 </script>
 
