@@ -44,6 +44,8 @@ describe("tabs store", () => {
         errorMessage: null,
         history: [],
         historyIndex: -1,
+        filterEnabled: false,
+        filterPattern: "",
       },
     ]);
     activeTabId.set(1);

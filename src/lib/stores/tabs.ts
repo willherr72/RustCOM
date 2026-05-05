@@ -25,6 +25,8 @@ export interface Tab {
   errorMessage: string | null;
   history: string[];
   historyIndex: number; // -1 == not navigating
+  filterEnabled: boolean;
+  filterPattern: string;
 }
 
 function defaultConfig(): PortConfig {
@@ -64,6 +66,8 @@ function defaultTab(id: TabId = allocTabId()): Tab {
     errorMessage: null,
     history: [],
     historyIndex: -1,
+    filterEnabled: false,
+    filterPattern: "",
   };
 }
 
