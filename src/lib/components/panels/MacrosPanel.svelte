@@ -30,21 +30,16 @@
   }
 
   async function save() {
-    console.log("[macros] save clicked", $state.snapshot(draft));
     panelError = null;
     if (!draft.name.trim()) {
       panelError = "Macro needs a name";
-      console.warn("[macros] empty name");
       return;
     }
     saving = true;
     try {
-      console.log("[macros] calling upsertMacro");
       await upsertMacro({ ...draft, name: draft.name.trim() });
-      console.log("[macros] upsertMacro resolved");
       editingId = null;
     } catch (e) {
-      console.error("[macros] save failed", e);
       panelError = `Save failed: ${String(e)}`;
     } finally {
       saving = false;
