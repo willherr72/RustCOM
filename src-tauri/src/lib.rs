@@ -8,7 +8,9 @@ use port::manager::PortManager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    log::info!("RustCOM starting");
     tauri::Builder::default()
+        .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .manage(PortManager::new())
         .invoke_handler(tauri::generate_handler![
