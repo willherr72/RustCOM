@@ -50,6 +50,10 @@ describe("tabs store", () => {
         filterPattern: "",
         loggingEnabled: false,
         logEntries: [],
+        searchOpen: false,
+        searchPattern: "",
+        searchUseRegex: false,
+        searchMatchIndex: -1,
       },
     ]);
     activeTabId.set(1);

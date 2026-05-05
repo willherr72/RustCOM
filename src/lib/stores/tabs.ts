@@ -37,6 +37,10 @@ export interface Tab {
   filterPattern: string;
   loggingEnabled: boolean;
   logEntries: LogEntry[];
+  searchOpen: boolean;
+  searchPattern: string;
+  searchUseRegex: boolean;
+  searchMatchIndex: number; // -1 when no matches
 }
 
 function defaultConfig(): PortConfig {
@@ -80,6 +84,10 @@ function defaultTab(id: TabId = allocTabId()): Tab {
     filterPattern: "",
     loggingEnabled: false,
     logEntries: [],
+    searchOpen: false,
+    searchPattern: "",
+    searchUseRegex: false,
+    searchMatchIndex: -1,
   };
 }
 
