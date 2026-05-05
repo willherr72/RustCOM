@@ -11,13 +11,17 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     host: host || false,
-    hmr: host
-      ? { protocol: "ws", host, port: 1421 }
-      : undefined,
+    hmr: host ? { protocol: "ws", host, port: 1421 } : undefined,
     watch: { ignored: ["**/src-tauri/**", "**/legacy-egui/**"] },
   },
   resolve: {
     alias: { $lib: path.resolve("./src/lib") },
+  },
+  optimizeDeps: {
+    include: ["monaco-editor/esm/vs/editor/editor.api"],
+  },
+  worker: {
+    format: "es",
   },
   test: {
     globals: true,
