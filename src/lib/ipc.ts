@@ -41,6 +41,17 @@ export interface DisconnectPayload {
   ts: number;
 }
 
+export type MacroMode = "ascii" | "hex";
+
+export interface Macro {
+  id: string;
+  name: string;
+  mode: MacroMode;
+  payload: string;
+  line_ending?: LineEnding | null;
+  hotkey?: string | null;
+}
+
 export const ipc = {
   listPorts: () => invoke<PortInfo[]>("list_ports"),
   openPort: (tabId: TabId, config: PortConfig) =>
@@ -54,6 +65,9 @@ export const ipc = {
     invoke<void>("set_dtr", { tabId, state }),
   setRts: (tabId: TabId, state: boolean) =>
     invoke<void>("set_rts", { tabId, state }),
+  listMacros: () => invoke<Macro[]>("list_macros"),
+  saveMacro: (item: Macro) => invoke<Macro[]>("save_macro", { item }),
+  deleteMacro: (id: string) => invoke<Macro[]>("delete_macro", { id }),
 };
 
 export function onRx(tabId: TabId, cb: EventCallback<RxPayload>): Promise<UnlistenFn> {
