@@ -7,14 +7,19 @@
 
   let scrollEl: HTMLDivElement | undefined = $state();
 
+  let asciiText = $derived.by(() => {
+    const t = $activeTab;
+    return applyFilter(bytesToText(t.buffer, t.stripAnsi), t.filterPattern, t.filterEnabled).text;
+  });
+  let hexText = $derived.by(() => formatHex($activeTab.buffer));
+
+  // For search overlay + single-pane rendering. In "both" view we search the
+  // ASCII column only (HEX dumps aren't a useful search target).
   let display = $derived.by(() => {
     const t = $activeTab;
-    const filter = (text: string) => applyFilter(text, t.filterPattern, t.filterEnabled).text;
-    if (t.viewMode === "ascii") return filter(bytesToText(t.buffer, t.stripAnsi));
-    if (t.viewMode === "hex") return formatHex(t.buffer);
-    const ascii = filter(bytesToText(t.buffer, t.stripAnsi));
-    const hex = formatHex(t.buffer);
-    return `=== HEX ===\n${hex}\n=== ASCII ===\n${ascii}`;
+    if (t.viewMode === "ascii") return asciiText;
+    if (t.viewMode === "hex") return hexText;
+    return asciiText;
   });
 
   $effect(() => {
@@ -88,8 +93,19 @@
 
 <div class="term-wrap">
   <SearchOverlay displayText={display} />
-  <div class="term" bind:this={scrollEl}>
-    <pre>{@html renderHighlighted(display, matches, $activeTab.searchMatchIndex)}</pre>
+  <div class="term" class:both={$activeTab.viewMode === "both"} bind:this={scrollEl}>
+    {#if $activeTab.viewMode === "both"}
+      <div class="col hex-col">
+        <div class="col-label">HEX</div>
+        <pre class="hex-pane">{hexText}</pre>
+      </div>
+      <div class="col ascii-col">
+        <div class="col-label">ASCII</div>
+        <pre>{@html renderHighlighted(asciiText, matches, $activeTab.searchMatchIndex)}</pre>
+      </div>
+    {:else}
+      <pre>{@html renderHighlighted(display, matches, $activeTab.searchMatchIndex)}</pre>
+    {/if}
   </div>
 </div>
 
@@ -117,6 +133,31 @@
     overflow: auto;
     padding: 8px 12px;
   }
+  .term.both {
+    display: grid;
+    grid-template-columns: minmax(440px, max-content) minmax(0, 1fr);
+    gap: 12px;
+    padding: 0;
+  }
+  .col { min-width: 0; display: flex; flex-direction: column; }
+  .col.hex-col {
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .col-label {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg-titlebar);
+    color: var(--fg-subtle);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .col pre { padding: 6px 12px; }
+  .hex-pane { white-space: pre; word-break: normal; }
   pre {
     margin: 0;
     font-family: var(--font-mono);
