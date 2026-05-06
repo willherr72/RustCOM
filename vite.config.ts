@@ -8,10 +8,10 @@ export default defineConfig({
   plugins: [svelte()],
   clearScreen: false,
   server: {
-    port: 1420,
+    port: 1525,
     strictPort: true,
     host: host || false,
-    hmr: host ? { protocol: "ws", host, port: 1421 } : undefined,
+    hmr: host ? { protocol: "ws", host, port: 1526 } : undefined,
     watch: { ignored: ["**/src-tauri/**", "**/legacy-egui/**"] },
   },
   resolve: {
