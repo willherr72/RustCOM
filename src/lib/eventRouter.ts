@@ -15,8 +15,56 @@ import {
 import { pushToast } from "$lib/stores/toasts";
 
 type Unsub = () => void;
+type Direction = "rx" | "tx";
 
 const subs = new Map<TabId, Unsub[]>();
+
+// rAF-batched buffer accumulator. Per-event store updates were thrashing the
+// webview on chatty devices because every appendBytes triggered an O(n)
+// re-decode of the whole buffer. Now we queue chunks and flush at most once
+// per animation frame (~60 Hz cap on the heavy work).
+type PendingBucket = { rxChunks: Uint8Array[]; rxTotal: number; txChunks: Uint8Array[]; txTotal: number };
+const pending = new Map<TabId, PendingBucket>();
+let rafScheduled = false;
+
+function queueChunk(id: TabId, direction: Direction, bytes: Uint8Array) {
+  let bucket = pending.get(id);
+  if (!bucket) {
+    bucket = { rxChunks: [], rxTotal: 0, txChunks: [], txTotal: 0 };
+    pending.set(id, bucket);
+  }
+  if (direction === "rx") {
+    bucket.rxChunks.push(bytes);
+    bucket.rxTotal += bytes.length;
+  } else {
+    bucket.txChunks.push(bytes);
+    bucket.txTotal += bytes.length;
+  }
+  if (!rafScheduled) {
+    rafScheduled = true;
+    requestAnimationFrame(flushPending);
+  }
+}
+
+function concatChunks(chunks: Uint8Array[], total: number): Uint8Array {
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return out;
+}
+
+function flushPending() {
+  rafScheduled = false;
+  if (pending.size === 0) return;
+  for (const [id, bucket] of pending) {
+    if (bucket.rxTotal > 0) appendBytes(id, concatChunks(bucket.rxChunks, bucket.rxTotal), "rx");
+    if (bucket.txTotal > 0) appendBytes(id, concatChunks(bucket.txChunks, bucket.txTotal), "tx");
+  }
+  pending.clear();
+}
 
 async function subscribe(id: TabId) {
   if (subs.has(id)) return;
@@ -24,13 +72,13 @@ async function subscribe(id: TabId) {
   const unrx = await onRx(id, (event) => {
     const p = event.payload as RxPayload;
     const bytes = new Uint8Array(p.bytes);
-    appendBytes(id, bytes, "rx");
+    queueChunk(id, "rx", bytes);
     pushLog(id, "rx", bytes, p.ts);
   });
   const untx = await onTx(id, (event) => {
     const p = event.payload as TxPayload;
     const bytes = new Uint8Array(p.bytes);
-    appendBytes(id, bytes, "tx");
+    queueChunk(id, "tx", bytes);
     pushLog(id, "tx", bytes, p.ts);
   });
   const undisc = await onDisconnect(id, (event) => {
@@ -68,6 +116,7 @@ function unsubscribe(id: TabId) {
   if (!list) return;
   list.forEach((u) => u());
   subs.delete(id);
+  pending.delete(id);
 }
 
 let stopReact: Unsub | null = null;
