@@ -9,6 +9,9 @@ A multi-port serial-port analyzer with embedded Lua scripting, built with Tauri 
 - **Send modes** — ASCII with selectable line endings (`None`, `\r`, `\n`, `\r\n`) or raw hex (`AA BB 0D 0A`).
 - **Send macros** — named one-shot snippets, optional F1–F12 hotkeys, persisted to disk.
 - **Lua scripting** — write scripts in a Monaco editor, run them against the active tab; API includes `serial.send`, `serial.send_text`, `serial.send_hex`, `on_recv`, `log`, `delay`, `ui.toast`.
+- **Live plot view** — define a regex with named capture groups (e.g. `temp:(?<temp>\d+\.\d+)`) and watch RX values render as a streaming line chart. Pause / Resume / Save CSV.
+- **Multi-tab Lua** — `tabs.send(id, ...)`, `tabs.send_text(id, "AT")`, `tabs.on_recv(id, fn)` so one script can drive several ports.
+- **Session restore** — opt-in: open tabs are remembered across restarts (disconnected on relaunch).
 - **Display-time regex filter** per tab (preserves the underlying buffer).
 - **Per-tab logging** with native save dialog.
 - **Ctrl+F search** with regex toggle and inline highlights.
