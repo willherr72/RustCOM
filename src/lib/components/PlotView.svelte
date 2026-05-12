@@ -111,4 +111,36 @@
     border-radius: 3px;
     color: var(--fg-muted);
   }
+
+  /* uPlot's docked legend — dark-theme it (the default is dark-on-light, invisible here). */
+  .plot-view :global(.u-legend) {
+    color: var(--fg-muted);
+    font-family: var(--font-ui);
+    font-size: 10px;
+  }
+  .plot-view :global(.u-legend th) { font-weight: 500; }
+  .plot-view :global(.u-legend .u-value) { color: var(--fg); font-family: var(--font-mono); }
+  .plot-view :global(.u-legend .u-marker) { border-radius: 2px; }
+  .plot-view :global(.u-legend .u-series:first-child) { color: var(--fg-subtle); }
+
+  /* Floating cursor tooltip injected by the tooltipPlugin in plot.ts. */
+  .plot-view :global(.u-tooltip) {
+    position: absolute;
+    pointer-events: none;
+    background: var(--bg-titlebar);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--fg);
+    white-space: nowrap;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+  .plot-view :global(.u-tt-x) { color: var(--fg-subtle); margin-bottom: 3px; }
+  .plot-view :global(.u-tt-row) { display: flex; align-items: center; gap: 6px; }
+  .plot-view :global(.u-tt-dot) { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .plot-view :global(.u-tt-name) { color: var(--fg-muted); }
+  .plot-view :global(.u-tt-val) { margin-left: auto; padding-left: 8px; }
 </style>
