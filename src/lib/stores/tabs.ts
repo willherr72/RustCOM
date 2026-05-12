@@ -260,3 +260,18 @@ export function setPlotCapacity(id: TabId, capacity: number) {
     list.map((t) => (t.id === id ? { ...t, plotCapacity: cap } : t))
   );
 }
+
+export function restoreTabs(configs: PortConfig[]) {
+  if (configs.length === 0) return;
+  const restored: Tab[] = configs.map((cfg) => {
+    const t = defaultTab();
+    t.config = cfg;
+    return t;
+  });
+  tabs.set(restored);
+  activeTabId.set(restored[0].id);
+}
+
+export function snapshotTabsForSession(): PortConfig[] {
+  return get(tabs).map((t) => t.config);
+}

@@ -2,7 +2,7 @@
   import { ipc, type DataBits, type FlowControl, type Parity, type StopBits } from "$lib/ipc";
   import { availablePorts } from "$lib/stores/ports";
   import { activeTab, activeTabId, patchActiveTab } from "$lib/stores/tabs";
-  import { persistDefaults } from "$lib/stores/settings";
+  import { persistDefaults, settings, persistSessionRestore } from "$lib/stores/settings";
 
   const BAUD_RATES = [300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
 
@@ -208,6 +208,16 @@
       <button class:active={$activeTab.rts} onclick={toggleRts}>RTS</button>
     </div>
   {/if}
+
+  <h4 class="signals">Session</h4>
+  <label class="toggle">
+    <input
+      type="checkbox"
+      checked={$settings.session_restore_enabled}
+      onchange={(e) => persistSessionRestore((e.currentTarget as HTMLInputElement).checked)}
+    />
+    Restore tabs on next launch
+  </label>
 </div>
 
 <style>

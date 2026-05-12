@@ -76,8 +76,18 @@ export interface DefaultsConfig {
   reconnect_delay_ms: number;
 }
 
+export interface SessionTab {
+  config: PortConfig;
+}
+
+export interface SessionSnapshot {
+  tabs: SessionTab[];
+}
+
 export interface Settings {
   defaults: DefaultsConfig;
+  session_restore_enabled: boolean;
+  last_session: SessionSnapshot;
 }
 
 export interface Script {
@@ -116,6 +126,10 @@ export const ipc = {
     invoke<string>("save_log", { path, entries }),
   loadSettings: () => invoke<Settings>("load_settings"),
   saveSettings: (settings: Settings) => invoke<Settings>("save_settings", { settings }),
+  saveSession: (snapshot: SessionSnapshot) =>
+    invoke<Settings>("save_session", { snapshot }),
+  setSessionRestoreEnabled: (enabled: boolean) =>
+    invoke<Settings>("set_session_restore_enabled", { enabled }),
   listScripts: () => invoke<Script[]>("list_scripts"),
   saveScript: (item: Script) => invoke<Script[]>("save_script", { item }),
   deleteScript: (id: string) => invoke<Script[]>("delete_script", { id }),

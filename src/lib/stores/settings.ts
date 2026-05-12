@@ -1,5 +1,6 @@
 import { writable, type Writable, get } from "svelte/store";
 import { ipc, type Settings, type DefaultsConfig } from "$lib/ipc";
+import type { SessionSnapshot } from "$lib/ipc";
 
 const initial: Settings = {
   defaults: {
@@ -13,6 +14,8 @@ const initial: Settings = {
     auto_reconnect: false,
     reconnect_delay_ms: 2000,
   },
+  session_restore_enabled: false,
+  last_session: { tabs: [] },
 };
 
 export const settings: Writable<Settings> = writable(initial);
@@ -37,4 +40,14 @@ export async function persistDefaults(defaults: DefaultsConfig) {
 
 export function snapshotDefaults(): DefaultsConfig {
   return get(settings).defaults;
+}
+
+export async function persistSession(snapshot: SessionSnapshot) {
+  const saved = await ipc.saveSession(snapshot);
+  settings.set(saved);
+}
+
+export async function persistSessionRestore(enabled: boolean) {
+  const saved = await ipc.setSessionRestoreEnabled(enabled);
+  settings.set(saved);
 }

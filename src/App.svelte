@@ -17,24 +17,39 @@
   import { startPolling, stopPolling } from "$lib/stores/ports";
   import { startEventRouter, stopEventRouter } from "$lib/eventRouter";
   import { macros } from "$lib/stores/macros";
-  import { loadSettings } from "$lib/stores/settings";
+  import { loadSettings, persistSession, settings as settingsStore } from "$lib/stores/settings";
+  import { restoreTabs, snapshotTabsForSession } from "$lib/stores/tabs";
   import { onToast } from "$lib/ipc";
   import { pushToast } from "$lib/stores/toasts";
   import { get } from "svelte/store";
 
   let active = $state<ActivityKey>("connection");
   let unToast: (() => void) | null = null;
+  let unBeforeUnload: (() => void) | null = null;
 
   onMount(async () => {
     await loadSettings();
+    const s = get(settingsStore);
+    if (s.session_restore_enabled && s.last_session.tabs.length > 0) {
+      restoreTabs(s.last_session.tabs.map((t) => t.config));
+    }
     startPolling();
     startEventRouter();
     window.addEventListener("keydown", onWindowKey);
     unToast = await onToast((e) => {
       pushToast(e.payload.level, e.payload.msg, e.payload.ts);
     });
+    const handler = () => {
+      if (get(settingsStore).session_restore_enabled) {
+        const snap = { tabs: snapshotTabsForSession().map((c) => ({ config: c })) };
+        void persistSession(snap);
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    unBeforeUnload = () => window.removeEventListener("beforeunload", handler);
   });
   onDestroy(() => {
+    if (unBeforeUnload) unBeforeUnload();
     if (unToast) unToast();
     window.removeEventListener("keydown", onWindowKey);
     stopEventRouter();
