@@ -94,6 +94,7 @@ async function subscribe(id: TabId) {
           errorMessage: p.reason,
           dtr: false,
           rts: false,
+          reconnectAttempts: willReconnect ? t.reconnectAttempts + 1 : t.reconnectAttempts,
         };
         return next;
       })
@@ -104,7 +105,9 @@ async function subscribe(id: TabId) {
   });
   const unre = await onReconnect(id, (_event) => {
     tabs.update((list) =>
-      list.map((t) => (t.id === id ? { ...t, state: "connected", errorMessage: null } : t))
+      list.map((t) =>
+        t.id === id ? { ...t, state: "connected", errorMessage: null, reconnectAttempts: 0 } : t
+      )
     );
   });
 

@@ -35,7 +35,12 @@
       {:else}
         <span class="dot muted"></span>
       {/if}
-      <span class="label">{labelFor(t.id)}</span>
+      <span class="label">
+        {labelFor(t.id)}
+        {#if t.state === "reconnecting" && t.reconnectAttempts > 1}
+          <span class="attempt"> · retry {t.reconnectAttempts}</span>
+        {/if}
+      </span>
       <button class="close" onclick={(e) => onClose(e, t.id)} title="Close tab">×</button>
     </div>
   {/each}
@@ -67,6 +72,7 @@
   .tab:hover { background: var(--bg-input); color: var(--fg); }
   .tab.active { background: var(--bg-elevated); color: var(--fg); }
   .label { white-space: nowrap; }
+  .attempt { color: var(--warn); font-size: 9px; }
   .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
   .dot.ok { background: var(--ok); }
   .dot.warn { background: var(--warn); }

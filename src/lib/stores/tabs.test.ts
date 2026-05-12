@@ -44,6 +44,7 @@ describe("tabs store", () => {
         dtr: false,
         rts: false,
         errorMessage: null,
+        reconnectAttempts: 0,
         history: [],
         historyIndex: -1,
         filterEnabled: false,

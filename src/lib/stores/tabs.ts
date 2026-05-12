@@ -32,6 +32,7 @@ export interface Tab {
   dtr: boolean;
   rts: boolean;
   errorMessage: string | null;
+  reconnectAttempts: number;
   history: string[];
   historyIndex: number; // -1 == not navigating
   filterEnabled: boolean;
@@ -81,6 +82,7 @@ function defaultTab(id: TabId = allocTabId()): Tab {
     dtr: false,
     rts: false,
     errorMessage: null,
+    reconnectAttempts: 0,
     history: [],
     historyIndex: -1,
     filterEnabled: false,
