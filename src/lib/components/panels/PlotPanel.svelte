@@ -3,6 +3,8 @@
   import { activeTab, activeTabId, setPlotPattern, startPlot, pausePlot, setPlotCapacity } from "$lib/stores/tabs";
   import { plotTick, ringFor, clearRing } from "$lib/plotState";
   import { extract } from "$lib/plotExtractor";
+  import { save } from "@tauri-apps/plugin-dialog";
+  import { writeTextFile } from "@tauri-apps/plugin-fs";
 
   type UPlotInstance = InstanceType<typeof import("uplot")>;
   type UPlotOptions = import("uplot").Options;
@@ -84,6 +86,26 @@
   function clearAll() {
     clearRing($activeTabId);
   }
+
+  async function exportCsv() {
+    const ring = ringFor($activeTabId, $activeTab.plotCapacity);
+    if (ring.size === 0) {
+      panelError = "Nothing to export yet.";
+      return;
+    }
+    const path = await save({
+      title: "Save plot data as CSV",
+      defaultPath: `rustcom_plot_${new Date().toISOString().replace(/[:.]/g, "-")}.csv`,
+      filters: [{ name: "CSV", extensions: ["csv"] }],
+    });
+    if (!path) return;
+    try {
+      const csv = ring.toCsv(ring.seriesNames());
+      await writeTextFile(path, csv);
+    } catch (e) {
+      panelError = `Save failed: ${String(e)}`;
+    }
+  }
 </script>
 
 <div class="panel">
@@ -125,6 +147,7 @@
       <button onclick={() => pausePlot($activeTabId, true)}>Pause</button>
     {/if}
     <button onclick={clearAll}>Clear</button>
+    <button onclick={exportCsv}>Save CSV…</button>
   </div>
 
   <div class="chart" bind:this={chartEl}></div>
