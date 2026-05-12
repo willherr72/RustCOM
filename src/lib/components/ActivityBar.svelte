@@ -22,7 +22,7 @@
       title={item.title}
       onclick={() => (active = item.key)}
     >
-      {item.icon}
+      {@html item.icon}
     </button>
   {/each}
 </nav>
@@ -50,6 +50,7 @@
     align-items: center;
     justify-content: center;
   }
+  .ico :global(svg) { width: 18px; height: 18px; display: block; }
   .ico:hover { background: var(--bg-input); color: var(--fg); }
   .ico.active {
     background: var(--bg-input);
