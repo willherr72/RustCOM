@@ -16,6 +16,10 @@ import {
   getTab,
   pushLog,
   patchActiveTab,
+  setPlotPattern,
+  startPlot,
+  pausePlot,
+  setPlotCapacity,
   type Tab,
 } from "./tabs";
 
@@ -55,6 +59,10 @@ describe("tabs store", () => {
         searchPattern: "",
         searchUseRegex: false,
         searchMatchIndex: -1,
+        plotPattern: "",
+        plotPaused: false,
+        plotStartedAt: 0,
+        plotCapacity: 1000,
       },
     ]);
     activeTabId.set(1);
@@ -164,5 +172,32 @@ describe("tabs store", () => {
     expect(get(activeTab).logEntries).toEqual([
       { ts_ms: 2000, direction: "rx", bytes: [4, 5] },
     ]);
+  });
+
+  it("setPlotPattern stores the pattern", () => {
+    setPlotPattern(1, "v=(?<v>\\d+)");
+    expect(get(activeTab).plotPattern).toBe("v=(?<v>\\d+)");
+  });
+
+  it("startPlot stamps wall-clock and unpauses", () => {
+    pausePlot(1, true);
+    startPlot(1);
+    const t = get(activeTab);
+    expect(t.plotPaused).toBe(false);
+    expect(t.plotStartedAt).toBeGreaterThan(0);
+  });
+
+  it("pausePlot toggles", () => {
+    pausePlot(1, true);
+    expect(get(activeTab).plotPaused).toBe(true);
+    pausePlot(1, false);
+    expect(get(activeTab).plotPaused).toBe(false);
+  });
+
+  it("setPlotCapacity clamps to a minimum", () => {
+    setPlotCapacity(1, 10);
+    expect(get(activeTab).plotCapacity).toBe(50);
+    setPlotCapacity(1, 5000);
+    expect(get(activeTab).plotCapacity).toBe(5000);
   });
 });

@@ -43,6 +43,10 @@ export interface Tab {
   searchPattern: string;
   searchUseRegex: boolean;
   searchMatchIndex: number; // -1 when no matches
+  plotPattern: string;
+  plotPaused: boolean;
+  plotStartedAt: number; // ms wall clock; 0 means not started
+  plotCapacity: number;
 }
 
 function defaultConfig(): PortConfig {
@@ -93,6 +97,10 @@ function defaultTab(id: TabId = allocTabId()): Tab {
     searchPattern: "",
     searchUseRegex: false,
     searchMatchIndex: -1,
+    plotPattern: "",
+    plotPaused: false,
+    plotStartedAt: 0,
+    plotCapacity: 1000,
   };
 }
 
@@ -224,4 +232,31 @@ export function pushLog(id: TabId, direction: Direction, bytes: Uint8Array, ts_m
 
 export function clearLog(id: TabId) {
   tabs.update((list) => list.map((t) => (t.id === id ? { ...t, logEntries: [] } : t)));
+}
+
+export function setPlotPattern(id: TabId, pattern: string) {
+  tabs.update((list) =>
+    list.map((t) => (t.id === id ? { ...t, plotPattern: pattern } : t))
+  );
+}
+
+export function startPlot(id: TabId) {
+  tabs.update((list) =>
+    list.map((t) =>
+      t.id === id ? { ...t, plotStartedAt: Date.now(), plotPaused: false } : t
+    )
+  );
+}
+
+export function pausePlot(id: TabId, paused: boolean) {
+  tabs.update((list) =>
+    list.map((t) => (t.id === id ? { ...t, plotPaused: paused } : t))
+  );
+}
+
+export function setPlotCapacity(id: TabId, capacity: number) {
+  const cap = Math.max(50, Math.floor(capacity));
+  tabs.update((list) =>
+    list.map((t) => (t.id === id ? { ...t, plotCapacity: cap } : t))
+  );
 }
