@@ -1,6 +1,6 @@
 use std::sync::mpsc::Sender;
 
-use mlua::{Lua, Result as LuaResult, Table, Value};
+use mlua::{Function, Lua, Result as LuaResult, Table, Value};
 
 use crate::port::worker::TabId;
 
@@ -10,6 +10,10 @@ pub enum ScriptOut {
     Send { tab_id: TabId, bytes: Vec<u8> },
     Toast { level: String, msg: String },
     Log { msg: String },
+    /// Set or clear the per-tab on_recv hook in the engine.
+    /// `key` is a stable identifier the engine uses as a HashMap key.
+    SetTabOnRecv { tab_id: TabId, key: String },
+    ClearTabOnRecv { tab_id: TabId },
 }
 
 /// Install the `serial`, `ui`, and free functions onto the Lua globals.
@@ -77,7 +81,7 @@ pub fn install_api(lua: &Lua, tab_id: TabId, out: Sender<ScriptOut>) -> LuaResul
     globals.set("ui", ui)?;
 
     // log(msg)
-    let log_out = out;
+    let log_out = out.clone();
     globals.set(
         "log",
         lua.create_function(move |_, msg: Value| {
@@ -98,6 +102,95 @@ pub fn install_api(lua: &Lua, tab_id: TabId, out: Sender<ScriptOut>) -> LuaResul
             Ok(())
         })?,
     )?;
+
+    // tabs API
+    let tabs_table = lua.create_table()?;
+
+    // tabs.send(tab_id, bytes)
+    let send_tab_out = out.clone();
+    tabs_table.set(
+        "send",
+        lua.create_function(move |_, args: (u32, Table)| {
+            let (tab_id, bytes) = args;
+            let mut buf = Vec::new();
+            for v in bytes.sequence_values::<u8>() {
+                buf.push(v?);
+            }
+            let _ = send_tab_out.send(ScriptOut::Send { tab_id, bytes: buf });
+            Ok(())
+        })?,
+    )?;
+
+    // tabs.send_text(tab_id, text)
+    let send_text_tab_out = out.clone();
+    tabs_table.set(
+        "send_text",
+        lua.create_function(move |_, args: (u32, String)| {
+            let (tab_id, text) = args;
+            let _ = send_text_tab_out.send(ScriptOut::Send {
+                tab_id,
+                bytes: text.into_bytes(),
+            });
+            Ok(())
+        })?,
+    )?;
+
+    // tabs.send_hex(tab_id, str)
+    let send_hex_tab_out = out.clone();
+    tabs_table.set(
+        "send_hex",
+        lua.create_function(move |_, args: (u32, String)| {
+            let (tab_id, input) = args;
+            match crate::hex::parse_hex_input(&input) {
+                Ok(bytes) => {
+                    let _ = send_hex_tab_out.send(ScriptOut::Send { tab_id, bytes });
+                    Ok(())
+                }
+                Err(e) => Err(mlua::Error::external(e)),
+            }
+        })?,
+    )?;
+
+    // tabs.on_recv(tab_id, fn) — store fn under a stable key, signal engine to use it.
+    // We stash the function in the global table _tab_callbacks[key] and tell the
+    // engine which key to dispatch via.
+    let on_recv_out = out.clone();
+    tabs_table.set(
+        "on_recv",
+        lua.create_function(move |lua_inner, args: (u32, Function)| {
+            let (tab_id, cb) = args;
+            let key = format!("_tab_recv_{tab_id}");
+            let globals = lua_inner.globals();
+            let registry: Table = match globals.get::<Value>("_tab_callbacks")? {
+                Value::Table(t) => t,
+                _ => {
+                    let t = lua_inner.create_table()?;
+                    globals.set("_tab_callbacks", t.clone())?;
+                    t
+                }
+            };
+            registry.set(key.clone(), cb)?;
+            let _ = on_recv_out.send(ScriptOut::SetTabOnRecv { tab_id, key });
+            Ok(())
+        })?,
+    )?;
+
+    // tabs.clear_on_recv(tab_id) — drop the per-tab callback.
+    let clear_recv_out = out;
+    tabs_table.set(
+        "clear_on_recv",
+        lua.create_function(move |lua_inner, tab_id: u32| {
+            let key = format!("_tab_recv_{tab_id}");
+            let globals = lua_inner.globals();
+            if let Ok(Value::Table(reg)) = globals.get::<Value>("_tab_callbacks") {
+                let _ = reg.set(key, mlua::Value::Nil);
+            }
+            let _ = clear_recv_out.send(ScriptOut::ClearTabOnRecv { tab_id });
+            Ok(())
+        })?,
+    )?;
+
+    globals.set("tabs", tabs_table)?;
 
     Ok(())
 }
@@ -167,6 +260,64 @@ mod tests {
                 assert_eq!(msg, "oops");
             }
             other => panic!("expected Toast, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn tabs_send_forwards_bytes_to_specific_tab() {
+        let (lua, rx) = fresh();
+        lua.load("tabs.send(99, {0xAA, 0xBB})").exec().unwrap();
+        match rx.recv().unwrap() {
+            ScriptOut::Send { tab_id, bytes } => {
+                assert_eq!(tab_id, 99);
+                assert_eq!(bytes, vec![0xAA, 0xBB]);
+            }
+            other => panic!("expected Send, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn tabs_send_text_targets_tab() {
+        let (lua, rx) = fresh();
+        lua.load(r#"tabs.send_text(42, "PING")"#).exec().unwrap();
+        match rx.recv().unwrap() {
+            ScriptOut::Send { tab_id, bytes } => {
+                assert_eq!(tab_id, 42);
+                assert_eq!(bytes, b"PING".to_vec());
+            }
+            other => panic!("expected Send, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn tabs_on_recv_signals_engine() {
+        let (lua, rx) = fresh();
+        lua.load(r#"tabs.on_recv(7, function(b) end)"#).exec().unwrap();
+        match rx.recv().unwrap() {
+            ScriptOut::SetTabOnRecv { tab_id, key } => {
+                assert_eq!(tab_id, 7);
+                assert_eq!(key, "_tab_recv_7");
+            }
+            other => panic!("expected SetTabOnRecv, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn tabs_clear_on_recv_signals_engine() {
+        let (lua, rx) = fresh();
+        lua.load(
+            r#"
+            tabs.on_recv(3, function(b) end)
+            tabs.clear_on_recv(3)
+            "#,
+        )
+        .exec()
+        .unwrap();
+        // First message is the SetTabOnRecv from on_recv.
+        rx.recv().unwrap();
+        match rx.recv().unwrap() {
+            ScriptOut::ClearTabOnRecv { tab_id } => assert_eq!(tab_id, 3),
+            other => panic!("expected ClearTabOnRecv, got {other:?}"),
         }
     }
 }

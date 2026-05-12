@@ -165,6 +165,8 @@ fn forward_loop(rx: Receiver<ScriptOut>, app: AppHandle) {
                     LogPayload { msg, ts: chrono::Local::now().timestamp_millis() },
                 );
             }
+            // Per-tab on_recv wiring is handled by the engine command loop (Task 13).
+            ScriptOut::SetTabOnRecv { .. } | ScriptOut::ClearTabOnRecv { .. } => {}
         }
     }
 }
