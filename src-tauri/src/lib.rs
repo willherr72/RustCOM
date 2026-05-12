@@ -39,6 +39,8 @@ pub fn run() {
             commands::logs::save_log,
             commands::settings::load_settings,
             commands::settings::save_settings,
+            commands::settings::save_session,
+            commands::settings::set_session_restore_enabled,
             commands::scripts::list_scripts,
             commands::scripts::save_script,
             commands::scripts::delete_script,
