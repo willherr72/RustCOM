@@ -11,6 +11,7 @@
   import FilterPanel from "$lib/components/panels/FilterPanel.svelte";
   import LogsPanel from "$lib/components/panels/LogsPanel.svelte";
   import ScriptsPanel from "$lib/components/panels/ScriptsPanel.svelte";
+  import PlotPanel from "$lib/components/panels/PlotPanel.svelte";
   import ToastStack from "$lib/components/ToastStack.svelte";
   import { activeTab, activeTabId, patchActiveTab } from "$lib/stores/tabs";
   import { startPolling, stopPolling } from "$lib/stores/ports";
@@ -101,6 +102,8 @@
         <LogsPanel />
       {:else if active === "scripts"}
         <ScriptsPanel />
+      {:else if active === "plot"}
+        <PlotPanel />
       {/if}
     </aside>
     <main class="main">

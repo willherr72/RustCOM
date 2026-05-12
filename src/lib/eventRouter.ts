@@ -13,6 +13,8 @@ import {
   type TabId,
 } from "$lib/ipc";
 import { pushToast } from "$lib/stores/toasts";
+import { extract } from "$lib/plotExtractor";
+import { pushSamples, dropRing } from "$lib/plotState";
 
 type Unsub = () => void;
 type Direction = "rx" | "tx";
@@ -74,6 +76,13 @@ async function subscribe(id: TabId) {
     const bytes = new Uint8Array(p.bytes);
     queueChunk(id, "rx", bytes);
     pushLog(id, "rx", bytes, p.ts);
+
+    const tab = getTab(id);
+    if (tab && tab.plotPattern && !tab.plotPaused && tab.plotStartedAt > 0) {
+      const text = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+      const r = extract(text, tab.plotPattern, tab.plotStartedAt, p.ts);
+      if (r.samples.length > 0) pushSamples(id, r.samples);
+    }
   });
   const untx = await onTx(id, (event) => {
     const p = event.payload as TxPayload;
@@ -120,6 +129,7 @@ function unsubscribe(id: TabId) {
   list.forEach((u) => u());
   subs.delete(id);
   pending.delete(id);
+  dropRing(id);
 }
 
 let stopReact: Unsub | null = null;

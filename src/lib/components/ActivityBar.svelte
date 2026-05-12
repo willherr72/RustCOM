@@ -1,5 +1,5 @@
 <script lang="ts">
-  export type ActivityKey = "connection" | "macros" | "scripts" | "filter" | "logs";
+  export type ActivityKey = "connection" | "macros" | "scripts" | "filter" | "logs" | "plot";
 
   let {
     active = $bindable<ActivityKey>("connection"),
@@ -11,6 +11,7 @@
     { key: "scripts",    icon: "{}", title: "Scripts" },
     { key: "filter",     icon: "⌕", title: "Filter" },
     { key: "logs",       icon: "≡", title: "Logs" },
+    { key: "plot",       icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 3 3 21 21 21"/><polyline points="6 17 10 11 14 14 21 6"/></svg>', title: "Plot" },
   ];
 </script>
 
