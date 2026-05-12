@@ -1,76 +1,73 @@
-# RustCOM - COM Port Analyzer
+# RustCOM — COM Port Analyzer
 
-A COM port analyzer built with Rust and egui. Provides serial communication tools with a dark-themed GUI.
-
-## Download
-
-Pre-built Windows executables are available on the [Releases](../../releases) page. Download `rustcom.exe` and run it directly — no installation needed.
+A multi-port serial-port analyzer with embedded Lua scripting, built with Tauri 2 and Svelte 5.
 
 ## Features
 
-- **Auto-detect COM ports** with automatic scanning for new/removed devices
-- **ASCII, Hex, and dual view modes** with proper hex dump formatting
-- **ASCII and Hex send modes** — type text or raw hex bytes (`AA BB 0D 0A`)
-- **Configurable line endings** — None, `\r`, `\n`, `\r\n`
-- **DTR/RTS signal control**
-- **Data logging** with timestamped entries and file export
-- **Regex filtering** on incoming data
-- **Auto-reconnect** on connection loss
-- **Virtual COM port** creation via com0com (Windows) or socat (Linux)
-- **Byte counters** for TX and RX
+- **Multi-port tabs** — open many COM ports at once, each with its own buffer, settings, and history.
+- **Three views** — ASCII, Hex (16-byte rows with offset + ASCII gutter), or Both. ANSI escape stripping.
+- **Send modes** — ASCII with selectable line endings (`None`, `\r`, `\n`, `\r\n`) or raw hex (`AA BB 0D 0A`).
+- **Send macros** — named one-shot snippets, optional F1–F12 hotkeys, persisted to disk.
+- **Lua scripting** — write scripts in a Monaco editor, run them against the active tab; API includes `serial.send`, `serial.send_text`, `serial.send_hex`, `on_recv`, `log`, `delay`, `ui.toast`.
+- **Live plot view** — define a regex with named capture groups (e.g. `temp:(?<temp>\d+\.\d+)`) and watch RX values render as a streaming line chart. Pause / Resume / Save CSV.
+- **Multi-tab Lua** — `tabs.send(id, ...)`, `tabs.send_text(id, "AT")`, `tabs.on_recv(id, fn)` so one script can drive several ports.
+- **Session restore** — opt-in: open tabs are remembered across restarts (disconnected on relaunch).
+- **Display-time regex filter** per tab (preserves the underlying buffer).
+- **Per-tab logging** with native save dialog.
+- **Ctrl+F search** with regex toggle and inline highlights.
+- **Auto-reconnect** per tab.
+- **Connection settings** — baud 300–921600, data bits 5/6/7/8, stop 1/2, parity None/Even/Odd, flow None/SW/HW, DTR/RTS toggles.
 
-## Connection Settings
+## Download
 
-- **Baud Rate**: 300 to 921600
-- **Data Bits**: 5, 6, 7, 8
-- **Stop Bits**: 1, 2
-- **Parity**: None, Even, Odd
-- **Flow Control**: None, Software (XON/XOFF), Hardware (RTS/CTS)
+Pre-built executables ship from the [Releases](../../releases) page.
 
-## Building from Source
+## Building from source
 
 ### Prerequisites
 
-- [Rust](https://rustup.rs/)
-- Windows: [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) with "Desktop development with C++"
+- [Rust](https://rustup.rs/) 1.77+
+- [Node.js](https://nodejs.org/) 20+
+- Tauri CLI 2: `cargo install tauri-cli --version "^2.0.0" --locked`
 
-### Build and Run
+Per-platform:
+
+- **Windows** — Build Tools for Visual Studio 2022 with "Desktop development with C++". WebView2 is preinstalled on Windows 11.
+- **Linux** — `sudo apt install libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev`
+- **macOS** — Xcode Command Line Tools.
+
+### Run in dev
 
 ```bash
-cargo run --release
+npm install
+cargo tauri dev
 ```
 
-The compiled exe will be at `target/release/rustcom.exe`.
+### Build a release binary
 
-## Project Structure
+```bash
+cargo tauri build
+```
+
+Artifacts land in `src-tauri/target/release/bundle/`.
+
+## Project layout
 
 ```
 RustCOM/
-├── Cargo.toml
-├── build.rs            # Windows icon embedding
-├── src/
-│   ├── main.rs         # Entry point
-│   ├── app.rs          # App struct, constants, display logic
-│   ├── serial.rs       # Serial enums, connect/disconnect/send
-│   ├── ui.rs           # GUI rendering
-│   ├── hex.rs          # Hex formatting and parsing
-│   ├── logging.rs      # Data logging and file export
-│   └── virtual_com.rs  # Virtual COM port creation
-└── README.md
+├── src-tauri/        Rust backend (Tauri commands, serial workers, Lua engine)
+├── src/              Svelte 5 frontend
+└── docs/             Specs and plans
 ```
 
-## Dependencies
+## Persistence
 
-- **eframe** / **egui** — Immediate-mode GUI
-- **serialport** — Serial port communication
-- **chrono** — Timestamps
-- **regex** — Data filtering
+Settings, macros, and scripts live in your OS user-data dir:
 
-## Troubleshooting
-
-- **Port access denied**: Close other apps using the port. On Linux, add yourself to `dialout`: `sudo usermod -a -G dialout $USER`
-- **Port not listed**: Click Refresh or enable auto-scan in the Advanced section.
+- Windows: `%LOCALAPPDATA%\rustcom\`
+- macOS: `~/Library/Application Support/rustcom/`
+- Linux: `~/.local/share/rustcom/`
 
 ## License
 
-See LICENSE file for details.
+MIT — see LICENSE.

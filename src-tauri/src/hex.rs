@@ -3,7 +3,6 @@ pub fn format_hex(data: &[u8]) -> String {
     for (i, chunk) in data.chunks(16).enumerate() {
         result.push_str(&format!("{:04X}  ", i * 16));
 
-        // Hex bytes
         for (j, byte) in chunk.iter().enumerate() {
             result.push_str(&format!("{:02X} ", byte));
             if j == 7 {
@@ -11,12 +10,10 @@ pub fn format_hex(data: &[u8]) -> String {
             }
         }
 
-        // Padding for incomplete lines
         if chunk.len() < 16 {
             for _ in 0..(16 - chunk.len()) {
                 result.push_str("   ");
             }
-            // Add the column-8 separator space if the line didn't reach it
             if chunk.len() <= 8 {
                 result.push(' ');
             }
@@ -24,7 +21,6 @@ pub fn format_hex(data: &[u8]) -> String {
 
         result.push_str("  ");
 
-        // ASCII representation
         for byte in chunk {
             let ch = if byte.is_ascii_graphic() || *byte == b' ' {
                 *byte as char
@@ -46,8 +42,7 @@ pub fn strip_ansi_codes(text: &str) -> String {
     while let Some(ch) = chars.next() {
         if ch == '\x1b' {
             if chars.peek() == Some(&'[') {
-                chars.next(); // consume '['
-                // Skip everything until we find a letter (command character)
+                chars.next();
                 while let Some(&next_ch) = chars.peek() {
                     chars.next();
                     if next_ch.is_ascii_alphabetic() {
@@ -65,8 +60,6 @@ pub fn strip_ansi_codes(text: &str) -> String {
     result
 }
 
-/// Parse space-separated hex bytes (e.g. "AA BB 0D 0A") into raw bytes.
-/// Returns Err with a message describing the first invalid token.
 pub fn parse_hex_input(input: &str) -> Result<Vec<u8>, String> {
     let trimmed = input.trim();
     if trimmed.is_empty() {
@@ -81,4 +74,52 @@ pub fn parse_hex_input(input: &str) -> Result<Vec<u8>, String> {
         }
     }
     Ok(bytes)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn format_hex_handles_short_buffer() {
+        let s = format_hex(b"AB");
+        assert!(s.starts_with("0000  41 42 "), "got: {s:?}");
+        assert!(s.trim_end().ends_with("AB"));
+    }
+
+    #[test]
+    fn format_hex_aligns_two_full_rows() {
+        let data: Vec<u8> = (0..32).collect();
+        let s = format_hex(&data);
+        let lines: Vec<&str> = s.lines().collect();
+        assert_eq!(lines.len(), 2);
+        assert!(lines[0].starts_with("0000  "));
+        assert!(lines[1].starts_with("0010  "));
+    }
+
+    #[test]
+    fn strip_ansi_removes_color_codes() {
+        let input = "\x1b[31mred\x1b[0m and \x1b[1;32mbold green\x1b[0m";
+        assert_eq!(strip_ansi_codes(input), "red and bold green");
+    }
+
+    #[test]
+    fn strip_ansi_passes_through_plain_text() {
+        assert_eq!(strip_ansi_codes("hello"), "hello");
+    }
+
+    #[test]
+    fn parse_hex_input_accepts_spaced_bytes() {
+        assert_eq!(parse_hex_input("AA BB 0D 0A").unwrap(), vec![0xAA, 0xBB, 0x0D, 0x0A]);
+    }
+
+    #[test]
+    fn parse_hex_input_rejects_garbage() {
+        assert!(parse_hex_input("AA ZZ").is_err());
+    }
+
+    #[test]
+    fn parse_hex_input_rejects_empty() {
+        assert!(parse_hex_input("   ").is_err());
+    }
 }

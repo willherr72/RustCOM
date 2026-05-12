@@ -1,9 +1,18 @@
 /target
-Cargo.lock
+/Cargo.lock
 *.swp
 *.swo
 *~
 .DS_Store
+.superpowers/
+.claude/
 
+# Tauri / Node
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
 
+# Legacy egui code, kept for reference only
+# (leave it tracked — do NOT add legacy-egui/ here)
 
