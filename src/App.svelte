@@ -12,6 +12,7 @@
   import LogsPanel from "$lib/components/panels/LogsPanel.svelte";
   import ScriptsPanel from "$lib/components/panels/ScriptsPanel.svelte";
   import PlotPanel from "$lib/components/panels/PlotPanel.svelte";
+  import PlotView from "$lib/components/PlotView.svelte";
   import ToastStack from "$lib/components/ToastStack.svelte";
   import { activeTab, activeTabId, patchActiveTab } from "$lib/stores/tabs";
   import { startPolling, stopPolling } from "$lib/stores/ports";
@@ -123,8 +124,12 @@
     </aside>
     <main class="main">
       <TabStrip />
-      <Terminal />
-      <SendRow />
+      {#if active === "plot"}
+        <PlotView />
+      {:else}
+        <Terminal />
+        <SendRow />
+      {/if}
     </main>
   </div>
   <StatusBar

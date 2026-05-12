@@ -14,10 +14,13 @@ import {
 } from "$lib/ipc";
 import { pushToast } from "$lib/stores/toasts";
 import { extract } from "$lib/plotExtractor";
-import { pushSamples, dropRing } from "$lib/plotState";
+import { pushSamples, dropRing, feedPlotLines } from "$lib/plotState";
 
 type Unsub = () => void;
 type Direction = "rx" | "tx";
+
+// Shared decoder for plot extraction; .decode() is independent per call.
+const plotTextDecoder = new TextDecoder("utf-8", { fatal: false });
 
 const subs = new Map<TabId, Unsub[]>();
 
@@ -79,9 +82,11 @@ async function subscribe(id: TabId) {
 
     const tab = getTab(id);
     if (tab && tab.plotPattern && !tab.plotPaused && tab.plotStartedAt > 0) {
-      const text = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-      const r = extract(text, tab.plotPattern, tab.plotStartedAt, p.ts);
-      if (r.samples.length > 0) pushSamples(id, r.samples);
+      const lines = feedPlotLines(id, plotTextDecoder.decode(bytes));
+      if (lines) {
+        const r = extract(lines, tab.plotPattern, tab.plotStartedAt, p.ts);
+        if (r.samples.length > 0) pushSamples(id, tab.plotCapacity, r.samples);
+      }
     }
   });
   const untx = await onTx(id, (event) => {
