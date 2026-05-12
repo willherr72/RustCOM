@@ -2,9 +2,9 @@
   import { toasts, dismissToast } from "$lib/stores/toasts";
 </script>
 
-<div class="stack">
+<div class="stack" role="region" aria-live="polite" aria-atomic="false" aria-label="Notifications">
   {#each $toasts as t (t.id)}
-    <button type="button" class="toast {t.level}" onclick={() => dismissToast(t.id)}>
+    <button type="button" class="toast {t.level}" onclick={() => dismissToast(t.id)} aria-label={`Dismiss notification: ${t.msg}`}>
       <span>{t.msg}</span>
     </button>
   {/each}
